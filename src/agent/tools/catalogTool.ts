@@ -161,12 +161,16 @@ export class CatalogTool {
         if (params.maxPricePaise && p.price > params.maxPricePaise) return false;
         if (params.category && p.category.toLowerCase() !== params.category.toLowerCase()) return false;
         if (params.query) {
-          const q = params.query.toLowerCase();
-          const matchesTitle = p.title.toLowerCase().includes(q);
-          const matchesDesc = p.description.toLowerCase().includes(q);
-          const matchesSku = p.sku.toLowerCase().includes(q);
-          const matchesTags = p.tags.some((t) => t.toLowerCase().includes(q));
-          return matchesTitle || matchesDesc || matchesSku || matchesTags;
+          const qWords = params.query.toLowerCase().split(/\s+/).filter(w => w.length > 2);
+          if (qWords.length === 0) return true; // fallback if query is too short
+          
+          return qWords.some(q => {
+            const matchesTitle = p.title.toLowerCase().includes(q);
+            const matchesDesc = p.description.toLowerCase().includes(q);
+            const matchesSku = p.sku.toLowerCase().includes(q);
+            const matchesTags = p.tags.some((t) => t.toLowerCase().includes(q));
+            return matchesTitle || matchesDesc || matchesSku || matchesTags;
+          });
         }
         return true;
       });

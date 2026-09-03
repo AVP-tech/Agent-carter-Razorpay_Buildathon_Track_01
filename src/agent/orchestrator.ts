@@ -102,7 +102,7 @@ IMPORTANT: Keep responses concise. Do not use excessive markdown headers or hash
             type: "function",
             function: {
               name: "search_catalog",
-              description: "Search for products in the catalog by query, e.g., 'espresso', 'beans', 'grinder'.",
+              description: "Search for products. Always use simple, single-word keywords (e.g., 'espresso', 'beans', 'grinder', 'syrup') instead of long phrases.",
               parameters: {
                 type: "object",
                 properties: {
