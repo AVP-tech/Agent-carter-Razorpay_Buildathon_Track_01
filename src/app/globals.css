@@ -1,0 +1,242 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    font-family: "Inter", system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+  /* Light mode body */
+  body {
+    background-color: #F8FAFC;
+    color: #0F172A;
+  }
+  .dark body {
+    background: #090F1A;
+    color: #F1F5F9;
+  }
+  ::selection {
+    background: rgba(82, 143, 240, 0.2);
+    color: #072654;
+  }
+  .dark ::selection {
+    background: rgba(0, 229, 255, 0.3);
+    color: #fff;
+  }
+}
+
+@layer components {
+  /* === CARDS === */
+  .card {
+    @apply rounded-xl border transition-all duration-300;
+    background: #fff;
+    border-color: #E2E8F0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  }
+  .dark .card {
+    background: rgba(19, 28, 45, 0.5);
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 4px 24px -4px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(12px);
+  }
+  .card-hover {
+    @apply card cursor-pointer;
+  }
+  .card-hover:hover {
+    transform: translateY(-1px);
+    border-color: #CBD5E1;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -2px rgba(0,0,0,0.05);
+  }
+  .dark .card-hover:hover {
+    border-color: rgba(0, 229, 255, 0.4);
+    box-shadow: 0 0 20px rgba(0, 229, 255, 0.15), inset 0 0 10px rgba(0, 229, 255, 0.05);
+    transform: translateY(-2px);
+  }
+
+  /* === BADGES === */
+  .badge {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-0.5 text-xs font-semibold rounded-md;
+  }
+  .badge-success {
+    @apply badge bg-emerald-50 text-emerald-700 border border-emerald-200;
+  }
+  .dark .badge-success {
+    @apply bg-emerald-950 text-emerald-400 border-emerald-800;
+  }
+  .badge-error {
+    @apply badge bg-red-50 text-red-700 border border-red-200;
+  }
+  .dark .badge-error {
+    @apply bg-red-950 text-red-400 border-red-800;
+  }
+  .badge-warning {
+    @apply badge bg-amber-50 text-amber-700 border border-amber-200;
+  }
+  .dark .badge-warning {
+    @apply bg-amber-950 text-amber-400 border-amber-800;
+  }
+  .badge-info {
+    @apply badge bg-blue-50 text-blue-700 border border-blue-200;
+  }
+  .dark .badge-info {
+    @apply bg-blue-950 text-blue-400 border-blue-800;
+  }
+  .badge-navy {
+    @apply badge bg-rzp-navy text-white;
+  }
+
+  /* === METRIC CARDS === */
+  .metric-card {
+    @apply card p-5 flex flex-col gap-1;
+  }
+  .dark .metric-card {
+    background: rgba(19, 28, 45, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-bottom: 2px solid rgba(0, 229, 255, 0.3);
+    position: relative;
+    overflow: hidden;
+  }
+  .dark .metric-card::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(0, 229, 255, 0.5), transparent);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .dark .metric-card:hover::before {
+    opacity: 1;
+  }
+  .dark .metric-card:hover {
+    border-bottom-color: #00E5FF;
+    box-shadow: 0 10px 30px -10px rgba(0, 229, 255, 0.3);
+  }
+  .metric-value {
+    @apply text-2xl font-bold tracking-tight text-slate-900;
+  }
+  .dark .metric-value {
+    color: #00E5FF;
+    text-shadow: 0 0 15px rgba(0, 229, 255, 0.4);
+  }
+  .metric-label {
+    @apply text-sm font-medium text-slate-500;
+  }
+  .dark .metric-label {
+    @apply text-slate-400;
+  }
+
+  /* === BUTTONS === */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 font-semibold text-sm rounded-lg transition-all duration-200;
+    background: #528FF0;
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(82,143,240,0.25);
+  }
+  .btn-primary:hover {
+    background: #1A73E8;
+    box-shadow: 0 6px 20px rgba(82,143,240,0.35);
+  }
+  .dark .btn-primary {
+    background: linear-gradient(135deg, #00E5FF, #3B82F6);
+    color: #090F1A;
+    font-weight: 700;
+    box-shadow: 0 4px 15px rgba(0, 229, 255, 0.3);
+  }
+  .dark .btn-primary:hover {
+    background: linear-gradient(135deg, #00E5FF, #00C6FF);
+    box-shadow: 0 6px 20px rgba(0, 229, 255, 0.5);
+    color: #090F1A;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 font-semibold text-sm rounded-lg transition-all duration-200;
+    background: #fff;
+    color: #334155;
+    border: 1px solid #E2E8F0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .btn-secondary:hover {
+    background: #F8FAFC;
+    border-color: #CBD5E1;
+    color: #0F172A;
+  }
+  .dark .btn-secondary {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #F1F5F9;
+    box-shadow: none;
+  }
+  .dark .btn-secondary:hover {
+    background: rgba(157, 78, 221, 0.15);
+    border-color: rgba(157, 78, 221, 0.5);
+    color: #fff;
+    box-shadow: 0 0 15px rgba(157, 78, 221, 0.3);
+  }
+
+  /* === CHAT BUBBLES === */
+  .chat-user {
+    @apply rounded-2xl rounded-br-sm px-4 py-3;
+    background: #528FF0;
+    color: #fff;
+  }
+  .dark .chat-user {
+    background: linear-gradient(135deg, #00E5FF, #3B82F6);
+    color: #090F1A;
+    box-shadow: 0 4px 15px rgba(0, 229, 255, 0.2);
+  }
+  .chat-agent {
+    @apply rounded-2xl rounded-bl-sm px-4 py-3;
+    background: #fff;
+    color: #1E293B;
+    border: 1px solid #E2E8F0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .dark .chat-agent {
+    background: rgba(30, 41, 59, 0.5);
+    color: #E2E8F0;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #334155;
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}

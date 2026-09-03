@@ -1,0 +1,117 @@
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Product {
+  id             String      @id @default(uuid())
+  sku            String      @unique
+  title          String
+  description    String
+  category       String
+  price          Int         // In Paise (e.g. 199900 = INR 1999.00)
+  costPrice      Int         // In Paise (for margin guardrails)
+  inventoryCount Int         @default(0)
+  tags           String[]    @default([])
+  imageUrl       String?
+  isActive       Boolean     @default(true)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  orderItems     OrderItem[]
+
+  @@index([category])
+  @@index([sku])
+}
+
+model Order {
+  id                String      @id @default(uuid())
+  razorpayOrderId   String      @unique
+  razorpayPaymentId String?
+  razorpaySignature String?
+  amount            Int         // Total in Paise
+  currency          String      @default("INR")
+  status            String      @default("CREATED") // CREATED, AUTHORIZED, CAPTURED, FAILED, REFUNDED
+  customerEmail     String?
+  customerPhone     String?
+  buyerAgentId      String?     // A2A buyer identifier
+  discountApplied   Int         @default(0) // In Paise
+  discountReason    String?
+  paymentLink       String?     // Fallback payment URL if autonomous capture fails
+  notes             Json?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  items             OrderItem[]
+  auditLogs         AuditLog[]
+
+  @@index([razorpayOrderId])
+  @@index([status])
+  @@index([buyerAgentId])
+}
+
+model OrderItem {
+  id         String   @id @default(uuid())
+  orderId    String
+  productId  String
+  quantity   Int
+  unitPrice  Int      // In Paise at time of purchase
+  totalPrice Int      // In Paise
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product    Product  @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+model AuditLog {
+  id                 String   @id @default(uuid())
+  sessionId          String
+  traceId            String
+  orderId            String?
+  actionType         String   // CATALOG_SEARCH, UPSELL_OFFER, GUARDRAIL_CHECK, ORDER_CREATED, FAILURE_RECOVERY, A2A_MANDATE_VERIFIED
+  actor              String   // BUYER_AGENT, SELLER_AGENT, SYSTEM_GUARDRAIL
+  reasoning          String?  // Step-by-step agent thought process
+  toolName           String?
+  toolInput          Json?
+  toolOutput         Json?
+  guardrailStatus    String   @default("PASSED") // PASSED, WARNING, BLOCKED
+  guardrailDetails   Json?    // Detailed margin, budget or policy verification results
+  executionTimeMs    Int?
+  createdAt          DateTime @default(now())
+  order              Order?   @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  @@index([sessionId])
+  @@index([traceId])
+  @@index([actionType])
+  @@index([guardrailStatus])
+}
+
+model BuyerMandate {
+  id                String   @id @default(uuid())
+  buyerAgentId      String   @unique
+  maxBudget         Int      // In Paise (Hard spending limit)
+  spentAmount       Int      @default(0) // In Paise
+  currency          String   @default("INR")
+  allowedCategories String[] @default([])
+  status            String   @default("ACTIVE") // ACTIVE, EXHAUSTED, REVOKED
+  expiresAt         DateTime
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([buyerAgentId])
+}
+
+model DiscountPolicy {
+  id                    String   @id @default(uuid())
+  name                  String
+  minCartValue          Int      // In Paise
+  maxDiscountPercent    Float    // e.g. 15.0 for 15%
+  minMarginFloorPercent Float    // e.g. 12.0 for minimum 12% profit margin
+  isActive              Boolean  @default(true)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
