@@ -15,86 +15,18 @@ type Message = {
 };
 
 const SUGGESTED_PROMPTS = [
-  "Show me the best espresso machines",
-  "Show me coffee beans under ₹1,000",
-  "I am looking for a premium grinder",
-  "I want to buy some running shoes",
+  "Show me espresso machines",
+  "Coffee beans dikhao under ₹1,000",
+  "Grinder chahiye best wala",
+  "What happens if I order the descaler?",
 ];
-
-function FormattedMessage({ content }: { content: string }) {
-  // Extract and render markdown images: ![alt](url)
-  const imageRegex = /!\[(.*?)\]\((.*?)\)/g;
-  const parts: { type: 'text' | 'image'; value?: string; alt?: string; src?: string }[] = [];
-  let lastIndex = 0;
-  let match;
-
-  while ((match = imageRegex.exec(content)) !== null) {
-    if (match.index > lastIndex) {
-      parts.push({ type: 'text', value: content.substring(lastIndex, match.index) });
-    }
-    parts.push({ type: 'image', alt: match[1], src: match[2] });
-    lastIndex = match.index + match[0].length;
-  }
-  if (lastIndex < content.length) {
-    parts.push({ type: 'text', value: content.substring(lastIndex) });
-  }
-
-  return (
-    <div className="text-sm space-y-2">
-      {parts.map((part, idx) => {
-        if (part.type === 'image' && part.src) {
-          return (
-            <div key={idx} className="my-3 overflow-hidden rounded-xl border border-slate-200 dark:border-white/10 shadow-sm max-w-sm">
-              <img
-                src={part.src}
-                alt={part.alt || 'Product Image'}
-                className="w-full h-44 object-cover"
-                onError={(e) => {
-                  (e.target as HTMLElement).style.display = 'none';
-                }}
-              />
-            </div>
-          );
-        }
-
-        const cleanedText = (part.value || '')
-          .replace(/^#{1,6}\s+/gm, '') // Remove hashtags
-          .trim();
-
-        if (!cleanedText) return null;
-
-        const lines = cleanedText.split('\n');
-
-        return (
-          <div key={idx} className="space-y-1">
-            {lines.map((line, lIdx) => {
-              if (!line.trim()) return <div key={lIdx} className="h-1.5" />;
-              
-              const boldSegments = line.split(/(\*\*.*?\*\*)/g);
-              return (
-                <p key={lIdx} className="leading-relaxed">
-                  {boldSegments.map((seg, sIdx) => {
-                    if (seg.startsWith('**') && seg.endsWith('**')) {
-                      return <strong key={sIdx} className="font-semibold text-slate-900 dark:text-white">{seg.slice(2, -2)}</strong>;
-                    }
-                    return <span key={sIdx}>{seg}</span>;
-                  })}
-                </p>
-              );
-            })}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
 
 export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 'welcome',
       role: 'agent',
-      content: '👋 Welcome to Agent Carter — your Autonomous AI Commerce Engine.\n\nI can find, price, and checkout any product in the world for you. Just tell me what you need — electronics, fashion, coffee, gadgets, anything.\n\nWhat are you looking for today?',
+      content: '👋 Hey! Main hoon Agent Carter — aapka AI commerce assistant.\n\nAap mujhse Hinglish ya English mein baat kar sakte ho. Products dhundho, buy karo, aur payment complete karo — sab kuch yahan!\n\nKya dhundh rahe ho?',
       timestamp: new Date()
     }
   ]);
@@ -181,13 +113,13 @@ export default function ChatPage() {
       return;
     }
 
-    const options: any = {
-      key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_TVDlyy9Uoq7Wil",
-      amount: Math.round(Number(amount) * 100),
+    const options = {
+      key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "",
+      amount: amount * 100,
       currency: "INR",
-      order_id: orderId,
       name: "Agent Carter",
-      description: "Autonomous Commerce Order",
+      description: "Hackathon Transaction",
+      order_id: orderId,
       handler: function (response: any) {
         alert(`✅ Payment Successful! 🎉\nPayment ID: ${response.razorpay_payment_id}`);
         // Auto-trigger upsell flow
@@ -196,47 +128,17 @@ export default function ChatPage() {
       prefill: {
         name: "Carter User",
         email: "user@agentcarter.com",
-        contact: "9876543210"
+        contact: "9999999999"
       },
       theme: {
         color: "#00E5FF"
-      },
-      modal: {
-        confirm_close: true,
-        ondismiss: function() {
-          console.log("Checkout modal closed");
-        }
       }
     };
-
-    const openCheckout = () => {
-      const rzp = new (window as any).Razorpay(options);
-      rzp.on('payment.failed', function (response: any) {
-        alert(
-          `❌ Payment Failed: ${response.error?.description || 'Declined'}\n\n` +
-          `💡 Tips for Razorpay Test Mode:\n` +
-          `• For Netbanking/Wallets: Allow Pop-ups for localhost in your browser address bar.\n` +
-          `• For Cards: Use test card 4111 1111 1111 1111 (Expiry 12/30, CVV 123).\n` +
-          `• Or use the '⚡ Demo Pay' button for instant 1-click simulation!`
-        );
-      });
-      rzp.open();
-    };
-
-    if (typeof (window as any).Razorpay === 'undefined') {
-      const script = document.createElement('script');
-      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-      script.async = true;
-      script.onload = openCheckout;
-      document.body.appendChild(script);
-    } else {
-      openCheckout();
-    }
-  };
-
-  const handleInstantDemoPay = () => {
-    alert("✅ Demo Payment Successful! 🎉\nPayment ID: pay_sim_" + Math.random().toString(36).substring(2, 9));
-    handleSend("Payment successful! What's next?");
+    const rzp1 = new (window as any).Razorpay(options);
+    rzp1.on('payment.failed', function (response: any) {
+      alert(`❌ Payment Failed: ${response.error.description}`);
+    });
+    rzp1.open();
   };
 
   return (
@@ -300,7 +202,7 @@ export default function ChatPage() {
                   className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}
                 >
                   <div className={`p-4 max-w-[75%] ${msg.role === 'user' ? 'chat-user' : 'chat-agent'}`}>
-                    <FormattedMessage content={msg.content} />
+                    <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
 
                     {/* Metadata rendering for Agent Messages */}
                     {msg.role === 'agent' && msg.metadata && (
@@ -320,21 +222,12 @@ export default function ChatPage() {
                             {msg.metadata.checkoutResult.amount && (
                               <div className="font-semibold text-sm text-slate-900 dark:text-white">₹{msg.metadata.checkoutResult.amount}</div>
                             )}
-                            <div className="flex gap-2 mt-1">
-                              <button
-                                onClick={() => handlePayment(msg.metadata!.checkoutResult!.orderId, msg.metadata!.checkoutResult!.amount)}
-                                className="flex-1 py-2.5 text-xs flex justify-center items-center gap-1.5 rounded-lg font-semibold transition-all shadow btn-primary"
-                              >
-                                💳 Pay via Razorpay
-                              </button>
-                              <button
-                                onClick={handleInstantDemoPay}
-                                className="px-3 py-2.5 text-xs flex justify-center items-center gap-1 rounded-lg font-semibold transition-all border border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20"
-                                title="1-Click Instant Payment Simulation for Testing/Demo"
-                              >
-                                ⚡ Demo Pay
-                              </button>
-                            </div>
+                            <button
+                              onClick={() => handlePayment(msg.metadata!.checkoutResult!.orderId, msg.metadata!.checkoutResult!.amount)}
+                              className="w-full py-2.5 text-sm flex justify-center rounded-lg font-semibold transition-all shadow btn-primary"
+                            >
+                              💳 Pay Now via Razorpay
+                            </button>
                           </div>
                         )}
 
@@ -410,7 +303,7 @@ export default function ChatPage() {
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Ask Agent Carter to find any product..."
+              placeholder="Ask AgentCarter anything... (Hinglish bhi chalega!)"
               className="rounded-xl px-4 py-3 flex-1 text-sm outline-none transition-all bg-slate-100 border border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 dark:bg-white/5 dark:border-white/10 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-cyan-500 dark:focus:ring-cyan-500/20"
             />
             <button

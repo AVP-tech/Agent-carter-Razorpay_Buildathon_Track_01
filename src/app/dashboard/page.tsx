@@ -86,36 +86,31 @@ export default function Home() {
             </motion.div>
           </motion.section>
 
-          {/* Section 2: How It Works — Animated Pipeline */}
+          {/* Section 2: Metrics Row */}
           <motion.section
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.5 }}
-            className="space-y-4"
+            className="space-y-3"
           >
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3">How Agent Carter Works</h2>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              {[
-                { step: "01", icon: "🔍", title: "You Ask", desc: "Search for any product — socks, drones, laptops, anything.", color: "border-l-cyan-500" },
-                { step: "02", icon: "🧠", title: "AI Finds It", desc: "Infinite AI catalog generates real products with live pricing instantly.", color: "border-l-violet-500" },
-                { step: "03", icon: "💳", title: "Secure Checkout", desc: "Razorpay-powered bounded checkout with margin guardrails.", color: "border-l-emerald-500" },
-                { step: "04", icon: "🚀", title: "Smart Upsell", desc: "Post-payment AI suggests complementary products to boost revenue.", color: "border-l-amber-400" },
-              ].map((item, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.5 + i * 0.1, duration: 0.4 }}
-                  className={`metric-card border-l-[3px] ${item.color} group`}
-                >
-                  <div className="flex items-center gap-3 mb-2">
-                    <span className="text-2xl">{item.icon}</span>
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Step {item.step}</span>
-                  </div>
-                  <div className="metric-value text-lg">{item.title}</div>
-                  <div className="metric-label text-xs mt-1">{item.desc}</div>
-                </motion.div>
-              ))}
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3">Platform Overview</h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="metric-card border-l-[3px] border-l-rzp-blue dark:border-l-cyan-500">
+                <div className="metric-value">6</div>
+                <div className="metric-label">Products Listed</div>
+              </div>
+              <div className="metric-card border-l-[3px] border-l-amber-400">
+                <div className="metric-value">₹25,000</div>
+                <div className="metric-label">Autonomous Ceiling</div>
+              </div>
+              <div className="metric-card border-l-[3px] border-l-emerald-500">
+                <div className="metric-value">15%</div>
+                <div className="metric-label">Min Margin Floor</div>
+              </div>
+              <div className="metric-card border-l-[3px] border-l-violet-500">
+                <div className="metric-value">A2A</div>
+                <div className="metric-label">Protocol Ready</div>
+              </div>
             </div>
           </motion.section>
 

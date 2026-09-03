@@ -127,32 +127,8 @@ export class CheckoutTool {
 
     // Step 4: Persist Order in Database
     let dbOrderId = `ord_${crypto.randomUUID()}`;
-    let isPersistedInDb = false;
-
     try {
       if (process.env.DATABASE_URL && !process.env.DATABASE_URL.includes("localhost:5432/razoragent_db")) {
-        // Ensure all products exist in PostgreSQL DB to satisfy foreign key constraints
-        for (const item of resolvedCart) {
-          await prisma.product.upsert({
-            where: { sku: item.sku },
-            update: {
-              price: item.unitPrice,
-              costPrice: item.costPrice,
-            },
-            create: {
-              id: item.productId,
-              sku: item.sku,
-              title: item.title,
-              description: item.title,
-              category: item.category,
-              price: item.unitPrice,
-              costPrice: item.costPrice,
-              inventoryCount: 50,
-              isActive: true,
-            },
-          });
-        }
-
         const createdOrder = await prisma.order.create({
           data: {
             id: dbOrderId,
@@ -181,7 +157,6 @@ export class CheckoutTool {
           },
         });
         dbOrderId = createdOrder.id;
-        isPersistedInDb = true;
       }
     } catch (dbErr) {
       console.warn("[CheckoutTool] DB Order persist skipped (in-memory mode):", (dbErr as any)?.message);
@@ -191,7 +166,7 @@ export class CheckoutTool {
     await AuditLogger.log({
       sessionId: params.sessionId,
       traceId: params.traceId,
-      orderId: isPersistedInDb ? dbOrderId : undefined,
+      orderId: dbOrderId,
       actionType: "ORDER_CREATED",
       actor: "SELLER_AGENT",
       reasoning: `Authorized Razorpay order ${rzpOrder.id} for ₹${(calculation.finalAmount / 100).toFixed(2)}. Guardrails approved.`,

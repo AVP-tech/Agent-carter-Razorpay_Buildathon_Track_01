@@ -35,7 +35,7 @@ export default function RootLayout({
       <body className="min-h-screen transition-colors duration-300 antialiased">
         <Navbar />
         {children}
-        <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="afterInteractive" />
+        <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
       </body>
     </html>
   );

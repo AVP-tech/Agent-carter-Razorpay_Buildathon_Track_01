@@ -2,7 +2,6 @@ import { CatalogTool, MockProduct } from "./catalogTool";
 import { ResolvedCartItem, UpsellRecommendation } from "../../types/commerce";
 import { GuardrailEngine } from "../../lib/guardrails";
 import { AuditLogger } from "../../lib/auditLogger";
-import { hasValidOpenAIKey } from "../../lib/openai";
 
 export class UpsellTool {
   /**
@@ -47,73 +46,51 @@ export class UpsellTool {
       };
     }
 
-    // Dynamic AI Upsell Generation
-    const baseProduct = resolvedCart[0];
+    const { products: allProducts } = await CatalogTool.searchCatalog({ inStockOnly: true });
+    const cartProductIds = new Set(resolvedCart.map((i) => i.productId));
+    const candidateUpsells = allProducts.filter((p) => !cartProductIds.has(p.id) && p.inventoryCount > 0);
+
     const recommendations: UpsellRecommendation[] = [];
-    
-    try {
-      const OpenAI = (await import("openai")).default;
-      const openaiApiKey = process.env.OPENAI_API_KEY || "";
-      
-      if (hasValidOpenAIKey(openaiApiKey)) {
-        const openai = new OpenAI({ apiKey: openaiApiKey });
-        const prompt = `You are an expert E-Commerce Upsell AI.
-The user just bought: "${baseProduct.title}" (Category: ${baseProduct.category}).
-Generate 2 highly relevant complementary items (e.g. if shoes, suggest shoe cleaner and socks. if phone, suggest case and charger).
-Provide the EXACT current real-world Indian market price in standard Indian Rupees (INR).
-Return a valid JSON object containing an "upsells" array with these keys:
-- title (string)
-- priceInRupees (number, e.g. 499 for shoe cleaner, 899 for case)
-- category (string)
 
-JSON format:
-{
-  "upsells": [
-    { "title": "...", "priceInRupees": 499, "category": "..." }
-  ]
-}`;
+    for (const candidate of candidateUpsells) {
+      // Dynamic affinity rule:
+      // If Espresso Maker in cart -> Recommend Grinder or Fresh Beans
+      // If Beans in cart -> Recommend Vanilla Syrup or Grinder
+      const isComplementary =
+        (resolvedCart.some((c) => c.category === "Coffee Appliances") &&
+          (candidate.category === "Coffee Beans" || candidate.category === "Coffee Accessories")) ||
+        (resolvedCart.some((c) => c.category === "Coffee Beans") &&
+          (candidate.category === "Syrups & Flavors" || candidate.category === "Coffee Accessories"));
 
-        const completion = await openai.chat.completions.create({
-          model: "gpt-4o",
-          messages: [{ role: "system", content: prompt }],
-          response_format: { type: "json_object" }
-        });
-        
-        let aiResponse = completion.choices[0].message.content || "";
-        const parsed = JSON.parse(aiResponse).upsells || [];
-        
-        for (const item of parsed) {
-          const discountPercent = 10.0; // 10% bundle discount
-          let rupees = Number(item.priceInRupees || item.pricePaise || 499);
-          if (item.pricePaise && !item.priceInRupees) rupees = item.pricePaise / 100;
-          const originalPrice = Math.round(rupees * 100);
-          const costPrice = Math.floor(originalPrice * 0.60); // 40% automated margin
-          const discountAmount = Math.round(originalPrice * (discountPercent / 100));
-          const discountedPrice = originalPrice - discountAmount;
-          
-          const candidateMargin = Number((((discountedPrice - costPrice) / discountedPrice) * 100).toFixed(2));
-          
-          if (candidateMargin >= GuardrailEngine.DEFAULT_MIN_MARGIN_FLOOR_PERCENT) {
-            recommendations.push({
-              recommendedProductId: `up_${Date.now()}_${Math.random().toString(36).substring(2,7)}`,
-              sku: `UP-${Math.random().toString(36).substring(2,8).toUpperCase()}`,
-              title: item.title,
-              originalPrice: originalPrice,
-              discountedBundlePrice: discountedPrice,
-              savings: discountAmount,
-              expectedMarginPercent: candidateMargin,
-              reasoning: `Highly relevant pair for ${baseProduct.title}. 10% bundle discount while preserving ${candidateMargin}% margin.`,
-            } as any);
-          }
+      if (isComplementary) {
+        // Calculate proposed 12% bundle discount on candidate
+        const discountPercent = 12.0;
+        const discountAmount = Math.round(candidate.price * (discountPercent / 100));
+        const discountedPrice = candidate.price - discountAmount;
+
+        // Verify that candidate alone and in combined basket satisfies margin floor
+        const candidateMargin = Number(
+          (((discountedPrice - candidate.costPrice) / discountedPrice) * 100).toFixed(2)
+        );
+
+        if (candidateMargin >= GuardrailEngine.DEFAULT_MIN_MARGIN_FLOOR_PERCENT) {
+          recommendations.push({
+            recommendedProductId: candidate.id,
+            sku: candidate.sku,
+            title: candidate.title,
+            originalPrice: candidate.price,
+            discountedBundlePrice: discountedPrice,
+            savings: discountAmount,
+            expectedMarginPercent: candidateMargin,
+            reasoning: `High conversion pair with ${resolvedCart[0].title}. Bundled with ${discountPercent}% discount while preserving ${candidateMargin}% margin.`,
+          });
         }
       }
-    } catch (e) {
-      console.error("[UpsellTool] Dynamic AI upsell failed:", e);
     }
 
     const hasUpsell = recommendations.length > 0;
     const explanation = hasUpsell
-      ? `Generated ${recommendations.length} high-margin complementary products to increase AOV.`
+      ? `Found ${recommendations.length} high-margin complementary products to increase merchant Average Order Value (AOV).`
       : "No suitable complementary products met the margin safety floor.";
 
     if (params.sessionId && params.traceId) {
@@ -124,14 +101,14 @@ JSON format:
         actor: "SELLER_AGENT",
         reasoning: explanation,
         toolName: "recommendUpsell",
-        toolInput: { cartItemCount: resolvedCart.length, baseProduct: baseProduct.title },
+        toolInput: { cartItemCount: resolvedCart.length, cartSkus: resolvedCart.map((c) => c.sku) },
         toolOutput: {
           upsellCount: recommendations.length,
           topRecommendation: recommendations[0]?.sku || null,
         },
         guardrailStatus: "PASSED",
         guardrailDetails: {
-          bundleDiscountPercent: 10.0,
+          bundleDiscountPercent: 12.0,
           marginFloorGuarded: true,
         },
         executionTimeMs: Date.now() - startTime,
@@ -140,8 +117,8 @@ JSON format:
 
     return {
       hasUpsell,
-      recommendations: recommendations.slice(0, 2),
-      bundleDiscountPercent: 10.0,
+      recommendations: recommendations.slice(0, 2), // top 2
+      bundleDiscountPercent: 12.0,
       explanation,
     };
   }

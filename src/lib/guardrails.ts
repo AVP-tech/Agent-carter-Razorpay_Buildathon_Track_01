@@ -3,7 +3,7 @@ import { CartCalculation, ResolvedCartItem } from "../types/commerce";
 
 export class GuardrailEngine {
   // Hard policy limits
-  public static readonly DEFAULT_MAX_AUTONOMOUS_LIMIT_PAISE = 50000000; // INR 5,00,000 (Allows high-value goods like iPhones, laptops, shoes)
+  public static readonly DEFAULT_MAX_AUTONOMOUS_LIMIT_PAISE = 2500000; // INR 25,000
   public static readonly DEFAULT_MIN_MARGIN_FLOOR_PERCENT = 15.0; // 15% Minimum Gross Profit
   public static readonly MAX_DISCOUNT_PERCENT = 25.0; // 25% Maximum single discount allowed
 

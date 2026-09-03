@@ -4,11 +4,10 @@ import { UpsellTool } from "./tools/upsellTool";
 import { CheckoutTool } from "./tools/checkoutTool";
 import { FailureRecoveryTool } from "./tools/failureRecoveryTool";
 import { AuditLogger } from "../lib/auditLogger";
-import { hasValidOpenAIKey } from "../lib/openai";
 import crypto from "crypto";
 
 const openaiApiKey = process.env.OPENAI_API_KEY || "";
-const hasValidOpenAI = hasValidOpenAIKey(openaiApiKey);
+const hasValidOpenAI = openaiApiKey.startsWith("sk-") && !openaiApiKey.includes("YourOpenAiKey");
 
 const sessionStore = new Map<
   string,
@@ -60,21 +59,16 @@ export class AgentOrchestrator {
         history: [
           {
             role: "system",
-            content: `You are Agent Carter, a top-tier Autonomous AI Commerce Assistant. You can sell any product in the world with real-time Razorpay checkout.
+            content: `You are Agent Carter, a cutting-edge Autonomous Commerce Engine for an elite coffee infrastructure brand. 
+CRITICAL PERSONA RULES:
+1. Default Tone: Ultra-professional, sharp, and concise (think Palantir, Stripe, or high-tech enterprise AI).
+2. Language Mirroring (The Hybrid Flex): If the user speaks to you in English, maintain the elite professional English tone. IF AND ONLY IF the user speaks in Hindi/Hinglish (e.g., "bhai sasti machine dikha"), seamlessly mirror their language and respond in friendly Hinglish, while still executing your technical tasks perfectly.
 
-HOW TO ANSWER (CRITICAL):
-1. Normal Conversational Tone: Speak naturally and conversationally, like a knowledgeable personal shopper. DO NOT talk like a robotic database.
-2. NO Hashtags or Header Spam: NEVER use hashtags (#, ##, ###).
-3. NO Robotic Prefixes: NEVER write repetitive labels like "- **Description:**" or "- **Price:**".
-4. Product Images: When presenting products from search_catalog, use each product's authentic imageUrl:
-![Product Image](product_imageUrl_here)
-1. **Product Name** — ₹Price
-A brief 1-sentence feature description.
-
-Which one would you like to get?
-
-5. Immediate Order Handling: When the user says "1st one", "2nd one", "buy Nike", or "yes", IMMEDIATELY call 'create_order' with that product's SKU so the Razorpay checkout button appears right away.
-6. Post-Payment Upsell: Once payment succeeds, call 'get_upsell_offer' to suggest matching add-ons.`,
+YOUR CAPABILITIES:
+1. Use 'search_catalog' to find products.
+2. Use 'create_order' when the user explicitly confirms they want to buy. (Once created, tell them to click the "Pay Now" button below).
+3. Use 'get_upsell_offer' AFTER a successful payment is confirmed by the system.
+Do not output raw JSON. Always respond in a clean, readable format.`,
           },
         ],
         traceId,
@@ -98,14 +92,14 @@ Which one would you like to get?
 
     try {
       const response = await this.openai.chat.completions.create({
-        model: "gpt-4o", // fast and cheap
+        model: "gpt-4o-mini", // fast and cheap
         messages: session.history,
         tools: [
           {
             type: "function",
             function: {
               name: "search_catalog",
-              description: "Search for ANY product by keyword. This is an AI-powered infinite catalog — it can find or generate ANY product (electronics, clothing, food, gadgets, etc.). Always call this when a user mentions wanting a product.",
+              description: "Search for products in the catalog by query, e.g., 'espresso', 'beans', 'grinder'.",
               parameters: {
                 type: "object",
                 properties: {
@@ -207,7 +201,7 @@ Which one would you like to get?
 
         // Get the final response from OpenAI after tools
         const finalResponse = await this.openai.chat.completions.create({
-          model: "gpt-4o",
+          model: "gpt-4o-mini",
           messages: session.history,
         });
         
@@ -250,7 +244,7 @@ Which one would you like to get?
     } catch (error: any) {
       console.error("OpenAI Error:", error);
       return {
-        reply: "I could not reach the AI service right now. Please try again in a moment.",
+        reply: `Oops, something went wrong: ${error.message}`,
         sessionId,
         traceId,
         actionsTaken,

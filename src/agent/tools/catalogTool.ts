@@ -1,6 +1,5 @@
 import prisma from "../../lib/prisma";
 import { AuditLogger } from "../../lib/auditLogger";
-import { getAuthenticProductImage } from "../../lib/productImages";
 import { hasValidOpenAIKey } from "../../lib/openai";
 
 export interface MockProduct {
@@ -146,7 +145,7 @@ export class CatalogTool {
             costPrice: p.costPrice,
             inventoryCount: p.inventoryCount,
             tags: p.tags,
-            imageUrl: p.imageUrl || getAuthenticProductImage(p.title, p.category, index),
+            imageUrl: p.imageUrl || undefined,
             isActive: p.isActive,
           }));
         }
@@ -173,89 +172,13 @@ export class CatalogTool {
       });
     }
 
-    if (results.length === 0 && params.query) {
-      try {
-        const OpenAI = (await import("openai")).default;
-        const openaiApiKey = process.env.OPENAI_API_KEY || "";
-        
-        if (hasValidOpenAIKey(openaiApiKey)) {
-          const openai = new OpenAI({ apiKey: openaiApiKey });
-          const prompt = `You are an expert E-Commerce Market Researcher. 
-The user searched for: "${params.query}". 
-Generate 2 highly realistic products that match this search. 
-CRITICAL RULE: You MUST provide the EXACT, current real-world Indian market price in standard Indian Rupees (INR).
-Return ONLY a valid JSON object containing a "products" array with these exact keys:
-- title (string, accurate real-world product name)
-- description (string, concise, natural 1-sentence product summary)
-- priceInRupees (number, the exact price in Rupees as an integer. For example: 10699 for Nike running shoes, 150000 for iPhone 15 Pro Max, 499 for socks)
-- category (string)
-- tags (array of 3 short strings)
-
-JSON format:
-{
-  "products": [
-    { "title": "...", "description": "...", "priceInRupees": 10699, "category": "...", "tags": ["a", "b", "c"] }
-  ]
-}`;
-
-          const completion = await openai.chat.completions.create({
-            model: "gpt-4o",
-            messages: [{ role: "system", content: prompt }],
-            response_format: { type: "json_object" } // Ensure JSON
-          });
-          
-          let aiResponse = completion.choices[0].message.content || "";
-          
-          // Fallback parsing if wrapped in object
-          let parsed = [];
-          const rawParsed = JSON.parse(aiResponse);
-          if (Array.isArray(rawParsed)) parsed = rawParsed;
-          else if (rawParsed.products) parsed = rawParsed.products;
-          else if (rawParsed[Object.keys(rawParsed)[0]]) parsed = rawParsed[Object.keys(rawParsed)[0]];
-
-          const generatedProducts = parsed.map((g: any, index: number) => {
-            let rupees = Number(g.priceInRupees || g.pricePaise || g.price || 999);
-            // If the model passed paise by mistake (e.g. > 10,000,000 paise = 1 Lakh+ for shoes)
-            if (g.pricePaise && !g.priceInRupees) {
-              rupees = g.pricePaise / 100;
-            }
-            const price = Math.round(rupees * 100);
-            const sku = `GEN-${Math.random().toString(36).substring(2,8).toUpperCase()}`;
-            const title = g.title || "Generated Product";
-            const category = g.category || "General";
-
-            return {
-              id: `gen_${Date.now()}_${Math.random().toString(36).substring(2,7)}`,
-              sku,
-              title,
-              description: g.description || "A high quality product.",
-              category,
-              price: price,
-              costPrice: Math.floor(price * 0.65), // 35% automated profit margin
-              inventoryCount: 20, // In stock
-              tags: g.tags || ["trending"],
-              imageUrl: getAuthenticProductImage(title, category, index),
-              isActive: true,
-            };
-          });
-
-          // Inject into our local mock DB so it can be checked out!
-          SEED_PRODUCTS.push(...generatedProducts);
-          results = generatedProducts;
-        }
-      } catch (e) {
-        console.error("[CatalogTool] Generative fallback failed:", e);
-      }
-    }
-
     if (params.sessionId && params.traceId) {
       await AuditLogger.log({
         sessionId: params.sessionId,
         traceId: params.traceId,
         actionType: "CATALOG_SEARCH",
         actor: "BUYER_AGENT",
-        reasoning: `Queried catalog with criteria: query='${params.query || "*"}', category='${params.category || "all"}'`,
-        toolName: "searchCatalog",
+        reasoning: `Queried catalog with criteria: query='${params.query || "*"}'`,
         toolInput: params,
         toolOutput: { matchCount: results.length, topMatches: results.slice(0, 3).map((r) => r.sku) },
         guardrailStatus: "PASSED",
@@ -270,14 +193,15 @@ JSON format:
   }
 
   /**
-   * Find single product by SKU or ID
+   * Get single product by SKU or ID
    */
   static async getProduct(skuOrId: string): Promise<MockProduct | null> {
     try {
       if (process.env.DATABASE_URL && !process.env.DATABASE_URL.includes("localhost:5432/razoragent_db")) {
         const found = await prisma.product.findFirst({
           where: {
-            OR: [{ id: skuOrId }, { sku: skuOrId }],
+            OR: [{ id: skuOrId }, { sku: { equals: skuOrId, mode: "insensitive" } }],
+            isActive: true,
           },
         });
         if (found) {
@@ -300,7 +224,10 @@ JSON format:
       // Fallback
     }
 
-    const localFound = SEED_PRODUCTS.find((p) => p.id === skuOrId || p.sku.toLowerCase() === skuOrId.toLowerCase());
-    return localFound || null;
+    const normalized = skuOrId.toLowerCase();
+    const local = SEED_PRODUCTS.find(
+      (p) => p.sku.toLowerCase() === normalized || p.id.toLowerCase() === normalized
+    );
+    return local || null;
   }
 }
