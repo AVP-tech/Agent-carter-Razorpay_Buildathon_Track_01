@@ -16,8 +16,8 @@ type Message = {
 
 const SUGGESTED_PROMPTS = [
   "Show me espresso machines",
-  "Coffee beans dikhao under ₹1,000",
-  "Grinder chahiye best wala",
+  "Show me coffee beans under ₹1,000",
+  "I'm looking for a premium grinder",
   "What happens if I order the descaler?",
 ];
 
@@ -26,7 +26,7 @@ export default function ChatPage() {
     {
       id: 'welcome',
       role: 'agent',
-      content: '👋 Hey! Main hoon Agent Carter — aapka AI commerce assistant.\n\nAap mujhse Hinglish ya English mein baat kar sakte ho. Products dhundho, buy karo, aur payment complete karo — sab kuch yahan!\n\nKya dhundh rahe ho?',
+      content: '👋 Hello! I am Agent Carter — your AI commerce assistant.\n\nI can help you discover products, negotiate prices, and complete your purchase securely.\n\nHow can I help you today?',
       timestamp: new Date()
     }
   ]);
@@ -115,7 +115,7 @@ export default function ChatPage() {
 
     const options = {
       key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "",
-      amount: amount * 100,
+      amount: Math.round(amount * 100),
       currency: "INR",
       name: "Agent Carter",
       description: "Hackathon Transaction",
@@ -303,7 +303,7 @@ export default function ChatPage() {
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Ask AgentCarter anything... (Hinglish bhi chalega!)"
+              placeholder="Ask Agent Carter anything..."
               className="rounded-xl px-4 py-3 flex-1 text-sm outline-none transition-all bg-slate-100 border border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 dark:bg-white/5 dark:border-white/10 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-cyan-500 dark:focus:ring-cyan-500/20"
             />
             <button
