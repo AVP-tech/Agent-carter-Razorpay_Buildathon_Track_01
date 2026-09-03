@@ -16,9 +16,9 @@ export async function GET() {
     },
     supportedProtocols: ["UAP-v1", "ACP-v1", "x402-v1", "REST-JSON"],
     endpoints: {
-      catalog: "/api/agent/catalog",
-      negotiate: "/api/agent/negotiate",
-      checkout: "/api/agent/checkout",
+      catalog: "/api/a2a/catalog",
+      negotiate: "/api/a2a/negotiate",
+      checkout: "/api/a2a/checkout",
       audit: "/api/agent/audit",
       health: "/api/health",
     },

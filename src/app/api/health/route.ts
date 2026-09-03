@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
+import { warmupDb } from "@/lib/prisma";
 
 export async function GET() {
+  const result = await warmupDb();
   return NextResponse.json({
-    status: "ok",
+    status: result.ok ? "healthy" : "degraded",
+    database: result,
     timestamp: new Date().toISOString(),
-    service: "RazorAgent Engine",
-    version: "1.0.0",
-    testMode: true,
-  });
+  }, { status: result.ok ? 200 : 503 });
 }

@@ -1,4 +1,4 @@
-import prisma from "./prisma";
+import prisma, { withRetry } from "./prisma";
 import { AuditRecord } from "../types/guardrail";
 import crypto from "crypto";
 
@@ -22,23 +22,27 @@ export class AuditLogger {
     // Persist to PostgreSQL if database connection is available
     try {
       if (process.env.DATABASE_URL && !process.env.DATABASE_URL.includes("localhost:5432/razoragent_db")) {
-        await prisma.auditLog.create({
-          data: {
-            id,
-            sessionId: record.sessionId,
-            traceId: record.traceId,
-            orderId: record.orderId || null,
-            actionType: record.actionType,
-            actor: record.actor,
-            reasoning: record.reasoning || null,
-            toolName: record.toolName || null,
-            toolInput: record.toolInput ? JSON.parse(JSON.stringify(record.toolInput)) : null,
-            toolOutput: record.toolOutput ? JSON.parse(JSON.stringify(record.toolOutput)) : null,
-            guardrailStatus: record.guardrailStatus,
-            guardrailDetails: record.guardrailDetails ? JSON.parse(JSON.stringify(record.guardrailDetails)) : null,
-            executionTimeMs: record.executionTimeMs || null,
-          },
-        });
+        await withRetry(() =>
+          prisma.auditLog.create({
+            data: {
+              id,
+              sessionId: record.sessionId,
+              traceId: record.traceId,
+              orderId: record.orderId || null,
+              actionType: record.actionType,
+              actor: record.actor,
+              reasoning: record.reasoning || null,
+              toolName: record.toolName || null,
+              toolInput: record.toolInput 
+                ? JSON.parse(JSON.stringify({ ...record.toolInput, channel: record.channel || "chat_ui" }))
+                : JSON.parse(JSON.stringify({ channel: record.channel || "chat_ui" })),
+              toolOutput: record.toolOutput ? JSON.parse(JSON.stringify(record.toolOutput)) : null,
+              guardrailStatus: record.guardrailStatus,
+              guardrailDetails: record.guardrailDetails ? JSON.parse(JSON.stringify(record.guardrailDetails)) : null,
+              executionTimeMs: record.executionTimeMs || null,
+            },
+          })
+        );
       }
     } catch (err) {
       // Non-blocking log persistence warning
@@ -54,15 +58,17 @@ export class AuditLogger {
   static async getTrace(sessionIdOrTraceId: string): Promise<any[]> {
     try {
       if (process.env.DATABASE_URL && !process.env.DATABASE_URL.includes("localhost:5432/razoragent_db")) {
-        const dbLogs = await prisma.auditLog.findMany({
-          where: {
-            OR: [
-              { sessionId: sessionIdOrTraceId },
-              { traceId: sessionIdOrTraceId },
-            ],
-          },
-          orderBy: { createdAt: "asc" },
-        });
+        const dbLogs = await withRetry(() =>
+          prisma.auditLog.findMany({
+            where: {
+              OR: [
+                { sessionId: sessionIdOrTraceId },
+                { traceId: sessionIdOrTraceId },
+              ],
+            },
+            orderBy: { createdAt: "asc" },
+          })
+        );
         if (dbLogs.length > 0) return dbLogs;
       }
     } catch {
@@ -76,9 +82,23 @@ export class AuditLogger {
   }
 
   /**
-   * Retrieve entire immutable audit ledger
+   * Retrieve entire immutable audit ledger — tries DB first, falls back to in-memory
    */
-  static getLedger(): any[] {
+  static async getLedger(): Promise<any[]> {
+    try {
+      if (process.env.DATABASE_URL && !process.env.DATABASE_URL.includes("localhost:5432/razoragent_db")) {
+        const dbLogs = await withRetry(() =>
+          prisma.auditLog.findMany({
+            orderBy: { createdAt: "desc" },
+            take: 100,
+          })
+        );
+        if (dbLogs.length > 0) return dbLogs;
+      }
+    } catch {
+      // Fallback to in-memory
+    }
+
     return this.inMemoryLedger;
   }
 }

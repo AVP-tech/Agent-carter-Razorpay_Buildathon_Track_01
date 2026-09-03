@@ -11,6 +11,7 @@ export class UpsellTool {
     currentCartItems: { skuOrId: string; quantity: number }[];
     sessionId?: string;
     traceId?: string;
+    channel?: string;
   }): Promise<{
     hasUpsell: boolean;
     recommendations: UpsellRecommendation[];
@@ -97,6 +98,7 @@ export class UpsellTool {
       await AuditLogger.log({
         sessionId: params.sessionId,
         traceId: params.traceId,
+        channel: params.channel,
         actionType: "UPSELL_OFFER",
         actor: "SELLER_AGENT",
         reasoning: explanation,

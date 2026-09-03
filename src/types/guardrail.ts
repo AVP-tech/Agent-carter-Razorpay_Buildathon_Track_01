@@ -33,4 +33,5 @@ export interface AuditRecord {
   guardrailDetails?: Record<string, any>;
   orderId?: string;
   executionTimeMs?: number;
+  channel?: string;
 }

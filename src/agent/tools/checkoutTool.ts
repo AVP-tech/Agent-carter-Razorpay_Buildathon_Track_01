@@ -19,6 +19,7 @@ export class CheckoutTool {
     customerPhone?: string;
     sessionId: string;
     traceId: string;
+    channel?: string;
   }): Promise<CheckoutResult> {
     const startTime = Date.now();
     const resolvedCart: ResolvedCartItem[] = [];
@@ -37,6 +38,7 @@ export class CheckoutTool {
         await AuditLogger.log({
           sessionId: params.sessionId,
           traceId: params.traceId,
+          channel: params.channel,
           actionType: "GUARDRAIL_CHECK",
           actor: "SYSTEM_GUARDRAIL",
           reasoning: "Stock depletion check failed during checkout lock phase.",
@@ -76,6 +78,7 @@ export class CheckoutTool {
       await AuditLogger.log({
         sessionId: params.sessionId,
         traceId: params.traceId,
+        channel: params.channel,
         actionType: "GUARDRAIL_CHECK",
         actor: "SYSTEM_GUARDRAIL",
         reasoning: `Checkout blocked by guardrail: ${guardrail.reason}`,
@@ -166,6 +169,7 @@ export class CheckoutTool {
     await AuditLogger.log({
       sessionId: params.sessionId,
       traceId: params.traceId,
+      channel: params.channel,
       orderId: dbOrderId,
       actionType: "ORDER_CREATED",
       actor: "SELLER_AGENT",

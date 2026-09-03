@@ -11,6 +11,6 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ count: trace.length, logs: trace });
   }
 
-  const allLogs = AuditLogger.getLedger();
+  const allLogs = await AuditLogger.getLedger();
   return NextResponse.json({ count: allLogs.length, logs: allLogs });
 }

@@ -1,6 +1,5 @@
 import prisma from "../../lib/prisma";
 import { AuditLogger } from "../../lib/auditLogger";
-import { hasValidOpenAIKey } from "../../lib/openai";
 
 export interface MockProduct {
   id: string;
@@ -108,6 +107,7 @@ export class CatalogTool {
     inStockOnly?: boolean;
     sessionId?: string;
     traceId?: string;
+    channel?: string;
   }): Promise<{
     count: number;
     products: MockProduct[];
@@ -176,6 +176,7 @@ export class CatalogTool {
       await AuditLogger.log({
         sessionId: params.sessionId,
         traceId: params.traceId,
+        channel: params.channel,
         actionType: "CATALOG_SEARCH",
         actor: "BUYER_AGENT",
         reasoning: `Queried catalog with criteria: query='${params.query || "*"}'`,
