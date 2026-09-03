@@ -151,53 +151,65 @@ IMPORTANT: Keep responses concise. Do not use excessive markdown headers or hash
         for (const toolCall of message.tool_calls) {
           const args = JSON.parse(toolCall.function.arguments);
 
-          if (toolCall.function.name === "search_catalog") {
-            actionsTaken.push("CATALOG_SEARCH");
-            const result = await CatalogTool.searchCatalog({
-              query: args.query,
-              maxPricePaise: args.maxPricePaise,
-              sessionId,
-              traceId,
-            });
+          try {
+            if (toolCall.function.name === "search_catalog") {
+              actionsTaken.push("CATALOG_SEARCH");
+              const result = await CatalogTool.searchCatalog({
+                query: args.query,
+                maxPricePaise: args.maxPricePaise,
+                sessionId,
+                traceId,
+              });
+              session.history.push({
+                role: "tool",
+                tool_call_id: toolCall.id,
+                content: JSON.stringify(result.products),
+              });
+            } else if (toolCall.function.name === "create_order") {
+              actionsTaken.push("EXECUTE_BOUNDED_CHECKOUT");
+              const result = await CheckoutTool.executeCheckout({
+                items: [{ skuOrId: args.sku, quantity: 1 }],
+                requestedDiscountPaise: 0,
+                buyerAgentId: context?.buyerAgentId || "web_ui_buyer",
+                buyerMaxBudgetPaise: context?.buyerMaxBudgetPaise,
+                sessionId,
+                traceId,
+              });
+              checkoutResult = result;
+              session.checkoutResult = result;
+              session.history.push({
+                role: "tool",
+                tool_call_id: toolCall.id,
+                content: JSON.stringify(result),
+              });
+            } else if (toolCall.function.name === "get_upsell_offer") {
+              actionsTaken.push("UPSELL_RECOMMENDATION");
+              const result = await UpsellTool.recommendUpsell({
+                currentCartItems: [{ skuOrId: args.baseSku, quantity: 1 }],
+                sessionId,
+                traceId,
+              });
+              upsellOffer = result;
+              session.upsellOffer = result;
+              session.history.push({
+                role: "tool",
+                tool_call_id: toolCall.id,
+                content: JSON.stringify(result),
+              });
+            } else {
+              // Unknown tool
+              session.history.push({
+                role: "tool",
+                tool_call_id: toolCall.id,
+                content: JSON.stringify({ error: "Unknown tool call" }),
+              });
+            }
+          } catch (toolErr: any) {
+            console.error(`Error executing tool ${toolCall.function.name}:`, toolErr);
             session.history.push({
               role: "tool",
               tool_call_id: toolCall.id,
-              content: JSON.stringify(result.products),
-            });
-          }
-
-          if (toolCall.function.name === "create_order") {
-            actionsTaken.push("EXECUTE_BOUNDED_CHECKOUT");
-            const result = await CheckoutTool.executeCheckout({
-              items: [{ skuOrId: args.sku, quantity: 1 }],
-              requestedDiscountPaise: 0,
-              buyerAgentId: context?.buyerAgentId || "web_ui_buyer",
-              buyerMaxBudgetPaise: context?.buyerMaxBudgetPaise,
-              sessionId,
-              traceId,
-            });
-            checkoutResult = result;
-            session.checkoutResult = result;
-            session.history.push({
-              role: "tool",
-              tool_call_id: toolCall.id,
-              content: JSON.stringify(result),
-            });
-          }
-
-          if (toolCall.function.name === "get_upsell_offer") {
-            actionsTaken.push("UPSELL_RECOMMENDATION");
-            const result = await UpsellTool.recommendUpsell({
-              currentCartItems: [{ skuOrId: args.baseSku, quantity: 1 }],
-              sessionId,
-              traceId,
-            });
-            upsellOffer = result;
-            session.upsellOffer = result;
-            session.history.push({
-              role: "tool",
-              tool_call_id: toolCall.id,
-              content: JSON.stringify(result),
+              content: JSON.stringify({ success: false, error: toolErr.message }),
             });
           }
         }
