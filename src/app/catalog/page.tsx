@@ -228,6 +228,9 @@ export default function CatalogPage() {
                       <span className="text-xl font-bold text-rzp-navy dark:text-orange-400">
                         {formatCurrency(Math.round(product.price * 1.18))}
                       </span>
+                      <span className="text-[10px] text-slate-400 dark:text-slate-500 block mt-0.5">
+                        {formatCurrency(product.price)} + 18% GST
+                      </span>
                     </div>
                     <Link
                       href={`/chat`}

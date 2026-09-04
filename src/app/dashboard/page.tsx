@@ -100,7 +100,7 @@ export default function Home() {
             <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3">Platform Overview</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="metric-card border-l-[3px] border-l-rzp-blue dark:border-l-orange-500">
-                <div className="metric-value">8</div>
+                <div className="metric-value">9</div>
                 <div className="metric-label">Products Listed</div>
               </div>
               <div className="metric-card border-l-[3px] border-l-amber-400">

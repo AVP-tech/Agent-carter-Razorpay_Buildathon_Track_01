@@ -278,4 +278,4 @@ DATABASE_URL="postgresql://neondb_owner:...@...neon.tech/neondb?sslmode=require"
 2. **`npx tsx scripts/demo-buyer-agent.ts`** — run full A2A lifecycle: catalog → negotiate → checkout → hostile rejection → **graceful failure recovery (stock-out alternative + budget-ceiling payment link)** → audit verification
 3. **`/audit`** — show immutable ledger, including the "Gracefully Recovered" stat and `FAILURE_RECOVERY` entries with reasoning and channel tags
 4. **`/chat`** — (bonus) ask "What happens if I order the descaler?" to see the same recovery surfaced conversationally, with an inline "Try this instead" button
-5. **Razorpay test card**: `4111 1111 1111 1111`, Expiry: `12/30`, CVV: `123`, OTP: `123456`
+5. **Razorpay test card** (domestic India Visa, per Razorpay's own test-mode docs -- `4111 1111 1111 1111` is a generic international test number and is NOT one of Razorpay's documented Indian cards, so avoid it if your account doesn't have international payments enabled): `4100 2800 0000 1007`, Expiry: any future date (e.g. `12/30`), CVV: any 3 digits (e.g. `123`), OTP: `123456`

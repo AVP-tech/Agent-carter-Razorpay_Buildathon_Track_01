@@ -43,6 +43,18 @@ export const SEED_PRODUCTS: MockProduct[] = [
     isActive: true,
   },
   {
+    id: "prod_beans_colombia_09",
+    sku: "BEANS-COLOMBIA-250G",
+    title: "Colombian Supremo Beans (250g)",
+    description: "Smooth medium roast with caramel and toasted almond notes -- a lighter everyday-format bag alongside the Ethiopian single origin.",
+    category: "Coffee Beans",
+    price: 74900, // INR 749.00 (~INR 883.82 incl. 18% GST -- the catalog's one Coffee Beans SKU under a GST-inclusive INR 1,000 budget)
+    costPrice: 35000, // INR 350.00 (53% margin)
+    inventoryCount: 120,
+    tags: ["beans", "arabica", "colombia", "everyday", "budget"],
+    isActive: true,
+  },
+  {
     id: "prod_grinder_03",
     sku: "GRINDER-CONICAL-PRO",
     title: "Precision Conical Burr Coffee Grinder",
