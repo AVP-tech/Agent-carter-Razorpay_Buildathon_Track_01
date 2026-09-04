@@ -104,7 +104,49 @@ async function runDemo() {
   
   console.log(`🚫 [MERCHANT AGENT] ${negFailData.decision?.toUpperCase() || 'ERROR'}: ${negFailData.reasoning || negFailData.error}`);
 
-  // --- STEP 5: Verify Audit Trail ---
+  // --- STEP 5: Graceful Failure Recovery (live, over the same HTTP API) ---
+  console.log("\n=======================================================");
+  console.log("🛟 [BUYER AI] Scenario 3: Graceful Failure Recovery");
+  console.log("=======================================================\n");
+
+  console.log("[BUYER AI] Attempting to check out an out-of-stock item ('CLEAN-DESCALER-BIO')...");
+  const stockOutRes = await fetch(`${BASE_URL}/api/a2a/checkout`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      cart: [{ productId: "CLEAN-DESCALER-BIO", quantity: 1 }],
+      buyerAgentId: "demo-buyer-ai-agent-v1",
+    })
+  });
+  const stockOutData = await stockOutRes.json() as any;
+
+  console.log(`🚫 [MERCHANT AGENT] Checkout blocked: ${stockOutData.error}`);
+  if (stockOutData.recovery?.suggestedAlternative) {
+    const alt = stockOutData.recovery.suggestedAlternative;
+    console.log(`✅ [MERCHANT AGENT] Gracefully recovered — strategy: ${stockOutData.recovery.strategy}`);
+    console.log(`   ${stockOutData.recovery.message}`);
+    console.log(`   → Suggested alternative: ${alt.title} (SKU: ${alt.sku}, ₹${(alt.price / 100).toFixed(2)}, ${alt.inventoryCount} in stock)`);
+  }
+
+  console.log("\n[BUYER AI] Attempting to check out an item priced above the ₹25,000 autonomous ceiling...");
+  const overBudgetRes = await fetch(`${BASE_URL}/api/a2a/checkout`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      cart: [{ productId: "COMMERCIAL-ROASTER-50KG", quantity: 1 }],
+      buyerAgentId: "demo-buyer-ai-agent-v1",
+      customerEmail: "finance-approver@enterprise.com",
+    })
+  });
+  const overBudgetData = await overBudgetRes.json() as any;
+
+  console.log(`🚫 [MERCHANT AGENT] Checkout blocked: ${overBudgetData.error}`);
+  if (overBudgetData.recovery?.recovered) {
+    console.log(`✅ [MERCHANT AGENT] Gracefully recovered — strategy: ${overBudgetData.recovery.strategy}`);
+    console.log(`   Escalation link generated for human approval: ${overBudgetData.paymentLink}`);
+  }
+
+  // --- STEP 6: Verify Audit Trail ---
   console.log("\n=======================================================");
   console.log("📋 [SYSTEM] Verifying Audit Trail");
   console.log("=======================================================\n");
@@ -113,7 +155,7 @@ async function runDemo() {
   const auditData = await auditRes.json() as any;
   console.log(`[AUDIT] Total events in ledger: ${auditData.count}`);
   if (auditData.logs && auditData.logs.length > 0) {
-    const recent = auditData.logs.slice(-4);
+    const recent = auditData.logs.slice(-6);
     recent.forEach((log: any) => {
       const channel = log.toolInput?.channel || "unknown";
       console.log(`  → [${log.actionType}] ${log.reasoning?.slice(0, 80) || "N/A"} (channel: ${channel})`);

@@ -65,18 +65,18 @@ export default function CinematicLanding() {
         @supports (height: 100dvh) { :root { --u: calc(100dvh / 1058); } }
 
         html, body {
-          width: 100%; height: 100%; overflow: hidden;
+          width: 100%; min-height: 100%;
           background-color: var(--stage-bg) !important;
           margin: 0; padding: 0;
         }
 
         #stage {
-          position: fixed; inset: 0;
+          position: relative;
           width: 100vw; height: 100vh;
           overflow: hidden; background: var(--stage-bg);
           color: var(--ink);
           font-family: 'Manrope', system-ui, sans-serif;
-          z-index: 9999; /* ensure it covers everything */
+          z-index: 1;
         }
 
         .plate { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; pointer-events: none; z-index: 1; }
@@ -219,7 +219,68 @@ export default function CinematicLanding() {
           .actions { position: static; margin-top: calc(36 * var(--u)); display: flex; flex-direction: column; gap: calc(18 * var(--u)); }
           .pill-cta { position: static; width: 100%; max-width: calc(280 * var(--u)); height: calc(52 * var(--u)); font-size: calc(18 * var(--u)); }
           .ghost { position: static; font-size: calc(17 * var(--u)); }
+
+          .scroll-cue { display: none; }
+          .about-section { padding: 56px 24px 72px; }
+          .about-layers { grid-template-columns: 1fr; }
+          .about-stats { gap: 32px; }
         }
+
+        /* Scroll cue at the base of the hero, desktop only */
+        .scroll-cue {
+          position: absolute; left: 50%; bottom: calc(36 * var(--u)); transform: translateX(-50%);
+          display: flex; flex-direction: column; align-items: center; gap: 10px;
+          font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--nav);
+          text-decoration: none; pointer-events: auto; opacity: 0.8; transition: opacity 0.2s ease;
+        }
+        .scroll-cue:hover { opacity: 1; }
+        .scroll-cue i {
+          display: block; width: 1px; height: 28px; background: linear-gradient(to bottom, var(--nav), transparent);
+          animation: scrollcue 1.8s ease-in-out infinite;
+        }
+        @keyframes scrollcue {
+          0%, 100% { transform: scaleY(1); opacity: 0.6; }
+          50% { transform: scaleY(1.3); opacity: 1; }
+        }
+
+        /* About section -- normal document flow, below the fixed-height hero */
+        .about-section {
+          position: relative;
+          background: #050505;
+          color: #fafafa;
+          font-family: 'Inter', system-ui, sans-serif;
+          padding: clamp(64px, 9vw, 120px) clamp(24px, 6vw, 96px) clamp(80px, 9vw, 140px);
+        }
+        .about-eyebrow {
+          display: inline-flex; align-items: center; gap: 8px;
+          font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+          color: #050505; background: #fafafa; padding: 6px 14px; border-radius: 999px; margin-bottom: 28px;
+        }
+        .about-heading {
+          font-size: clamp(26px, 3.6vw, 42px); font-weight: 500; letter-spacing: -0.01em;
+          margin: 0 0 20px; max-width: 760px;
+        }
+        .about-lede {
+          font-size: clamp(15px, 1.5vw, 18px); line-height: 1.7; color: #b0afaf;
+          max-width: 640px; margin: 0 0 56px;
+        }
+        .about-layers {
+          display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px;
+          background: rgba(255,255,255,0.08); border-radius: 20px; overflow: hidden; margin-bottom: 56px;
+        }
+        .about-layer { background: #0a0a0a; padding: 30px 26px; }
+        .about-layer-num { font-size: 12px; color: #7a7a7a; font-weight: 600; letter-spacing: 0.06em; margin-bottom: 14px; }
+        .about-layer h3 { font-size: 17px; font-weight: 600; margin: 0 0 8px; color: #fafafa; }
+        .about-layer p { font-size: 13.5px; line-height: 1.6; color: #a7a6a6; margin: 0; }
+        .about-stats {
+          display: flex; flex-wrap: wrap; gap: 44px;
+          padding-top: 36px; border-top: 1px solid rgba(255,255,255,0.1); margin-bottom: 52px;
+        }
+        .about-stat-value { font-size: 26px; font-weight: 600; color: #fafafa; }
+        .about-stat-label { font-size: 12.5px; color: #7a7a7a; margin-top: 4px; }
+        .about-stack-label { font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #7a7a7a; margin-bottom: 12px; }
+        .about-stack { display: flex; flex-wrap: wrap; gap: 10px; }
+        .about-chip { font-size: 13px; padding: 7px 14px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.14); color: #c7c6c6; }
       `}} />
       
       <div id="stage">
@@ -253,6 +314,7 @@ export default function CinematicLanding() {
           </Link>
 
           <nav className="links" aria-label="Primary">
+            <a href="#about">About</a>
             <Link href="/dashboard">Dashboard</Link>
             <Link href="/catalog">Catalog</Link>
             <Link href="/audit">Audit Trail</Link>
@@ -272,6 +334,7 @@ export default function CinematicLanding() {
           <div className="menu-inner">
             <p className="menu-eyebrow">Menu</p>
             <ul className="menu-list">
+              <li><a href="#about" className="menu-link">About</a></li>
               <li><Link href="/dashboard" className="menu-link">Dashboard</Link></li>
               <li><Link href="/catalog" className="menu-link">Catalog</Link></li>
               <li><Link href="/audit" className="menu-link">Audit Trail</Link></li>
@@ -300,8 +363,66 @@ export default function CinematicLanding() {
               Enter Dashboard
             </Link>
           </div>
+          <a href="#about" className="scroll-cue" aria-label="Scroll to learn more">
+            <span>About the project</span>
+            <i />
+          </a>
         </main>
       </div>
+
+      <section id="about" className="about-section">
+        <span className="about-eyebrow">Built for the Razorpay Hackathon — Track 01</span>
+        <h2 className="about-heading">Autonomy needs a leash, not a lecture.</h2>
+        <p className="about-lede">
+          The real challenge behind this build: give an AI agent enough trust to move real money, without giving it enough control to hurt the business -- by accident or on purpose. Every piece of AgentCarter exists to hold that one tension.
+        </p>
+
+        <div className="about-layers">
+          <div className="about-layer">
+            <div className="about-layer-num">01 -- Intelligence</div>
+            <h3>Proposes</h3>
+            <p>An LLM and rule-based tools search the catalog, negotiate price, and suggest margin-safe upsells -- but they only ever propose an action, never execute one directly.</p>
+          </div>
+          <div className="about-layer">
+            <div className="about-layer-num">02 -- Enforcement</div>
+            <h3>Validates</h3>
+            <p>Every money action passes through a deterministic gate in plain code -- a hardcoded spend ceiling, margin floor, and discount cap. No prompt can talk it into bypassing a rule it doesn't reason about.</p>
+          </div>
+          <div className="about-layer">
+            <div className="about-layer-num">03 -- Accountability</div>
+            <h3>Records</h3>
+            <p>Accepted or rejected, every decision is written to an immutable audit trail with a plain-language reason -- so "why did the agent do that" is always answerable from the database, not memory.</p>
+          </div>
+        </div>
+
+        <div className="about-stats">
+          <div>
+            <div className="about-stat-value">₹25,000</div>
+            <div className="about-stat-label">Autonomous spend ceiling</div>
+          </div>
+          <div>
+            <div className="about-stat-value">15%</div>
+            <div className="about-stat-label">Minimum margin floor</div>
+          </div>
+          <div>
+            <div className="about-stat-value">25%</div>
+            <div className="about-stat-label">Maximum single discount</div>
+          </div>
+          <div>
+            <div className="about-stat-value">3</div>
+            <div className="about-stat-label">Failure paths handled gracefully</div>
+          </div>
+        </div>
+
+        <div>
+          <div className="about-stack-label">Built with</div>
+          <div className="about-stack">
+            {['Next.js 15', 'TypeScript', 'Prisma + Postgres', 'Razorpay', 'OpenAI GPT-4o-mini', 'Framer Motion'].map((tech) => (
+              <span key={tech} className="about-chip">{tech}</span>
+            ))}
+          </div>
+        </div>
+      </section>
     </>
   );
 }

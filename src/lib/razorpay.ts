@@ -146,14 +146,19 @@ export class RazorpayService {
   }
 
   /**
-   * Verifies Razorpay standard Checkout Signature
+   * Verifies Razorpay standard Checkout Signature.
+   * Fails CLOSED: if no secret is configured we cannot verify anything, so
+   * we must never treat an unverifiable signature as valid.
    */
   static verifyPaymentSignature(
     razorpayOrderId: string,
     razorpayPaymentId: string,
     signature: string
   ): boolean {
-    if (!keySecret) return true; // Mock mode accepts
+    if (!keySecret) {
+      console.warn("[Razorpay] Cannot verify payment signature: RAZORPAY_KEY_SECRET is not configured. Rejecting by default.");
+      return false;
+    }
     const body = `${razorpayOrderId}|${razorpayPaymentId}`;
     const expectedSignature = crypto
       .createHmac("sha256", keySecret)
@@ -163,14 +168,18 @@ export class RazorpayService {
   }
 
   /**
-   * Verifies Razorpay Webhook Signature
+   * Verifies Razorpay Webhook Signature.
+   * Fails CLOSED for the same reason as above.
    */
   static verifyWebhookSignature(
     rawBody: string,
     signature: string,
     webhookSecret: string
   ): boolean {
-    if (!webhookSecret) return true;
+    if (!webhookSecret) {
+      console.warn("[Razorpay] Cannot verify webhook signature: no webhook secret configured. Rejecting by default.");
+      return false;
+    }
     const expectedSignature = crypto
       .createHmac("sha256", webhookSecret)
       .update(rawBody)

@@ -10,7 +10,18 @@ export interface AgentCommerceManifest {
     auditTransparency: boolean;
     failureRecovery: boolean;
   };
+  /** The actual wire protocol this manifest and its endpoints implement. */
   supportedProtocols: string[];
+  /**
+   * Emerging agentic-commerce standards this API is designed to be
+   * conceptually compatible with (NPCI UAP, ACP, AP2, x402). This is a
+   * declaration of intent/alignment, not a claim of certified conformance
+   * to any of those specs.
+   */
+  protocolAlignment: {
+    inspiredBy: string[];
+    note: string;
+  };
   endpoints: {
     catalog: string;
     negotiate: string;
@@ -23,20 +34,17 @@ export interface AgentCommerceManifest {
     minMarginFloorPercent: number;
     humanApprovalThresholdInr: number;
   };
-}
-
-export interface AgentNegotiationRequest {
-  buyerAgentId?: string;
-  desiredItems: { skuOrQuery: string; quantity: number }[];
-  targetBudgetPaise?: number;
-  includeUpsell?: boolean;
-}
-
-export interface AgentCheckoutRequest {
-  buyerAgentId: string;
-  items: { productId: string; quantity: number }[];
-  appliedDiscountPaise?: number;
-  customerEmail?: string;
-  customerPhone?: string;
-  paymentMethod?: "AUTONOMOUS_TEST" | "PAYMENT_LINK";
+  /** Guidance for callers on how to make requests to the checkout endpoint safely. */
+  checkoutRequirements: {
+    idempotencyKeyHeader: string;
+    idempotencyKeyRequired: boolean;
+    idempotencyNote: string;
+  };
+  /** Whether a bearer token is currently required on the money-moving A2A endpoints. */
+  security: {
+    authRequired: boolean;
+    authHeader: string;
+    rateLimited: boolean;
+    rateLimitNote: string;
+  };
 }

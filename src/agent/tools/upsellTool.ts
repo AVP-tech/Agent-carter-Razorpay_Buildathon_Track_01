@@ -3,6 +3,16 @@ import { ResolvedCartItem, UpsellRecommendation } from "../../types/commerce";
 import { GuardrailEngine } from "../../lib/guardrails";
 import { AuditLogger } from "../../lib/auditLogger";
 
+const CATEGORY_AFFINITY: Record<string, string[]> = {
+  "Coffee Appliances": ["Coffee Beans", "Coffee Accessories", "Maintenance"],
+  "Coffee Beans": ["Coffee Accessories", "Syrups & Flavors"],
+  "Coffee Accessories": ["Coffee Beans", "Coffee Appliances"],
+  "Syrups & Flavors": ["Coffee Beans"],
+  "Maintenance": ["Coffee Accessories"],
+  "Cold Brew": ["Syrups & Flavors", "Coffee Accessories"],
+  "Industrial Equipment": ["Coffee Beans", "Maintenance"],
+};
+
 export class UpsellTool {
   /**
    * Recommend margin-protected upsell / cross-sell items based on cart composition
@@ -54,14 +64,14 @@ export class UpsellTool {
     const recommendations: UpsellRecommendation[] = [];
 
     for (const candidate of candidateUpsells) {
-      // Dynamic affinity rule:
-      // If Espresso Maker in cart -> Recommend Grinder or Fresh Beans
-      // If Beans in cart -> Recommend Vanilla Syrup or Grinder
-      const isComplementary =
-        (resolvedCart.some((c) => c.category === "Coffee Appliances") &&
-          (candidate.category === "Coffee Beans" || candidate.category === "Coffee Accessories")) ||
-        (resolvedCart.some((c) => c.category === "Coffee Beans") &&
-          (candidate.category === "Syrups & Flavors" || candidate.category === "Coffee Accessories"));
+      // Category affinity map -- which categories a purchase in each
+      // category should try to upsell against. Originally only Coffee
+      // Appliances and Coffee Beans had any rule at all, so buying the
+      // descaler, cold brew, or the industrial roaster never produced an
+      // upsell. Every catalog category now has at least one rule.
+      const isComplementary = resolvedCart.some((c) =>
+        (CATEGORY_AFFINITY[c.category] || []).includes(candidate.category)
+      );
 
       if (isComplementary) {
         // Calculate proposed 12% bundle discount on candidate

@@ -13,7 +13,7 @@ interface AuditLog {
   toolInput?: any;
   toolOutput?: any;
   guardrailStatus: string;
-  guardrailDetails?: string;
+  guardrailDetails?: any;
   createdAt: string;
 }
 
@@ -85,12 +85,15 @@ const getActorBadge = (actor: string) => {
 
 function LogEntry({ log }: { log: AuditLog }) {
   const [expanded, setExpanded] = useState(false);
+  const isRecovery = log.actionType === 'FAILURE_RECOVERY';
 
   return (
-    <motion.div variants={itemVariants} layout className="card p-4">
+    <motion.div variants={itemVariants} layout className={`card p-4 ${isRecovery ? 'border-l-4 border-l-amber-400 dark:border-l-amber-500' : ''}`}>
       <div className="flex items-center gap-2 flex-wrap">
         <div className={`w-2 h-2 rounded-full ${getStatusColor(log.guardrailStatus)}`} />
-        <span className="text-sm font-semibold text-slate-900 dark:text-white">{log.actionType}</span>
+        <span className="text-sm font-semibold text-slate-900 dark:text-white">
+          {isRecovery ? '🛟 ' : ''}{log.actionType}
+        </span>
         <span className={getActorBadge(log.actor)}>{log.actor}</span>
         <span className={getStatusBadge(log.guardrailStatus)}>{log.guardrailStatus}</span>
         <span className="text-[11px] text-slate-400 dark:text-slate-500 ml-auto">{formatDate(log.createdAt)}</span>
@@ -145,7 +148,7 @@ function LogEntry({ log }: { log: AuditLog }) {
                   <div>
                     <div className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-semibold mb-1">Guardrail Details</div>
                     <pre className="bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-xs font-mono overflow-x-auto text-slate-700 dark:text-slate-300">
-                      {log.guardrailDetails}
+                      {typeof log.guardrailDetails === 'object' ? JSON.stringify(log.guardrailDetails, null, 2) : log.guardrailDetails}
                     </pre>
                   </div>
                 )}
@@ -188,6 +191,7 @@ export default function AuditPage() {
     total: logs.length,
     passed: logs.filter(l => l.guardrailStatus === 'PASSED').length,
     blocked: logs.filter(l => l.guardrailStatus === 'BLOCKED').length,
+    recovered: logs.filter(l => l.actionType === 'FAILURE_RECOVERY').length,
   };
 
   return (
@@ -199,7 +203,7 @@ export default function AuditPage() {
         </div>
 
         {!loading && (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             <div className="metric-card">
               <div className="metric-label text-sm text-slate-500 dark:text-slate-400 font-medium">Total Events</div>
               <div className="metric-value text-2xl font-bold text-slate-900 dark:text-white mt-1">{stats.total}</div>
@@ -211,6 +215,10 @@ export default function AuditPage() {
             <div className="metric-card">
               <div className="metric-label text-sm text-slate-500 dark:text-slate-400 font-medium">Blocked</div>
               <div className="metric-value text-2xl font-bold text-red-600 dark:text-red-400 mt-1">{stats.blocked}</div>
+            </div>
+            <div className="metric-card">
+              <div className="metric-label text-sm text-slate-500 dark:text-slate-400 font-medium">Gracefully Recovered</div>
+              <div className="metric-value text-2xl font-bold text-amber-600 dark:text-amber-400 mt-1">{stats.recovered}</div>
             </div>
           </div>
         )}

@@ -12,7 +12,8 @@
     "db:seed": "tsx scripts/seed.ts",
     "test:agent": "tsx scripts/test-agent-e2e.ts",
     "test:failures": "tsx scripts/test-failures.ts",
-    "test:a2a": "tsx scripts/test-a2a-checkout.ts"
+    "test:a2a": "tsx scripts/test-a2a-checkout.ts",
+    "test": "npm run test:agent && npm run test:failures && npm run test:a2a"
   },
   "dependencies": {
     "@prisma/client": "^6.4.1",

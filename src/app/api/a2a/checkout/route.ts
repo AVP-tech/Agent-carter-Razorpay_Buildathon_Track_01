@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { CheckoutTool } from "@/agent/tools/checkoutTool";
 import { UpsellTool } from "@/agent/tools/upsellTool";
+import { guardA2ARequest, getCallerIdentity } from "@/lib/a2aSecurity";
 import crypto from "crypto";
 
 export async function POST(req: NextRequest) {
@@ -10,8 +11,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: "Missing or invalid field: cart array" }, { status: 400 });
     }
 
+    const identity = getCallerIdentity(req, body.buyerAgentId);
+    // Checkout moves real money, so it gets a tighter window than search/negotiate.
+    const guardResponse = guardA2ARequest(req, identity, 10);
+    if (guardResponse) return guardResponse;
+
     const sessionId = body.sessionId || `a2a_sess_${crypto.randomBytes(4).toString("hex")}`;
     const traceId = body.traceId || `a2a_trc_${crypto.randomBytes(4).toString("hex")}`;
+
+    // Idempotency key: standard header first (matches Stripe/Razorpay-style
+    // convention for machine clients), body field as a fallback. A buyer
+    // agent that times out and retries the same logical request should
+    // reuse the same key so it never gets double-charged.
+    const idempotencyKey = req.headers.get("idempotency-key") || body.idempotencyKey || undefined;
 
     // Transform cart format if necessary
     const items = body.cart.map((i: any) => ({
@@ -19,21 +31,29 @@ export async function POST(req: NextRequest) {
       quantity: i.quantity || 1
     }));
 
-    // Checkout execution
+    // Checkout execution -- guardrail-blocked outcomes (stock-out, budget
+    // ceiling, margin floor) are returned as structured results with a
+    // `recovery` object, not thrown, so a buyer agent can act on them.
     const checkoutResult = await CheckoutTool.executeCheckout({
       items,
       requestedDiscountPaise: body.requestedDiscountPaise,
       buyerAgentId: body.buyerAgentId || "external_a2a_buyer",
+      buyerMaxBudgetPaise: body.buyerMaxBudgetPaise,
+      customerEmail: body.customerEmail,
+      customerPhone: body.customerPhone,
       sessionId,
       traceId,
       channel: "a2a_api",
+      idempotencyKey,
     });
 
     if (!checkoutResult.success) {
-      // Failed checkout (e.g., blocked by guardrail or stock)
       return NextResponse.json({
         success: false,
         error: checkoutResult.guardrailReason || checkoutResult.status,
+        status: checkoutResult.status,
+        recovery: checkoutResult.recovery || null,
+        paymentLink: checkoutResult.paymentLink || null,
         details: checkoutResult,
         sessionId,
         traceId
@@ -61,16 +81,13 @@ export async function POST(req: NextRequest) {
         bundleDiscountPercent: upsellData.bundleDiscountPercent,
         explanation: upsellData.explanation
       } : null,
-      paymentLink: `http://localhost:3000/chat?orderId=${checkoutResult.orderId}`, // fallback test UI
       sessionId,
       traceId
     });
   } catch (error: any) {
-    // Check if error is out of stock related, then suggest recover_failure logic
-    return NextResponse.json({ 
-      success: false, 
+    return NextResponse.json({
+      success: false,
       error: error.message,
-      recommendation: error.message.includes("Insufficient stock") ? "Call /api/a2a/catalog with inStockOnly=true to find alternatives." : undefined
     }, { status: 400 }); // Bad Request is more appropriate for logical errors
   }
 }

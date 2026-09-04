@@ -57,7 +57,7 @@ export default function Navbar() {
             </svg>
           </div>
           <span className="text-lg font-bold tracking-tight text-slate-900 dark:text-white">
-            Agent<span className="text-rzp-blue dark:text-cyan-400">Carter</span>
+            Agent<span className="text-rzp-blue dark:text-orange-400">Carter</span>
           </span>
         </Link>
 
@@ -71,7 +71,7 @@ export default function Navbar() {
                 href={item.href}
                 className={`relative px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ${
                   isActive
-                    ? "text-rzp-blue dark:text-cyan-400 bg-blue-50 dark:bg-white/10"
+                    ? "text-rzp-blue dark:text-orange-400 bg-orange-50 dark:bg-white/10"
                     : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5"
                 }`}
               >
@@ -79,7 +79,7 @@ export default function Navbar() {
                 {isActive && (
                   <motion.div
                     layoutId="activeTab"
-                    className="absolute bottom-0 left-3 right-3 h-0.5 bg-rzp-blue dark:bg-cyan-400 rounded-full"
+                    className="absolute bottom-0 left-3 right-3 h-0.5 bg-rzp-blue dark:bg-orange-400 rounded-full"
                     transition={{ type: "spring" as const, stiffness: 400, damping: 30 }}
                   />
                 )}

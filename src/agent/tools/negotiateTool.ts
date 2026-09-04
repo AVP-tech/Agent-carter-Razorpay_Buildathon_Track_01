@@ -42,7 +42,7 @@ export class NegotiateTool {
       totalCost: product.costPrice
     }];
 
-    const { guardrail, calculation } = GuardrailEngine.evaluateCart(
+    const { calculation } = GuardrailEngine.evaluateCart(
       mockCart,
       requestedDiscountPaise
     );
@@ -50,44 +50,37 @@ export class NegotiateTool {
     let decision: "accepted" | "countered" | "rejected";
     let finalPrice = product.price;
     let reasoning = "";
-    
-    // Check Hard Discount Cap first
+
     const MAX_DISCOUNT = GuardrailEngine.MAX_DISCOUNT_PERCENT; // usually 25%
 
-    if (params.requestedDiscountPercent > MAX_DISCOUNT) {
-      decision = "rejected";
-      reasoning = `Requested discount of ${params.requestedDiscountPercent}% exceeds platform hard limit of ${MAX_DISCOUNT}%.`;
-    } else if (!guardrail.passed) {
-      // It violated margin floor or ceiling
-      if (guardrail.code === "MARGIN_BREACH") {
-        // Try to counter with max possible discount that keeps margin >= 15%
-        const minAcceptableMargin = GuardrailEngine.DEFAULT_MIN_MARGIN_FLOOR_PERCENT / 100;
-        // Margin = (Price - Cost) / Price
-        // (NewPrice - Cost) / NewPrice >= MinMargin
-        // NewPrice - Cost >= MinMargin * NewPrice
-        // NewPrice * (1 - MinMargin) >= Cost
-        // NewPrice >= Cost / (1 - MinMargin)
-        const minAcceptablePrice = Math.ceil(product.costPrice / (1 - minAcceptableMargin));
-        
-        const counterDiscountPaise = product.price - minAcceptablePrice;
-        const counterDiscountPercent = (counterDiscountPaise / product.price) * 100;
+    // The best discount this product could ever get, whichever limit bites
+    // first: the platform-wide hard cap, or this product's own margin floor.
+    // Margin = (Price - Cost) / Price >= MinMargin
+    // => NewPrice >= Cost / (1 - MinMargin)
+    const minAcceptableMargin = GuardrailEngine.DEFAULT_MIN_MARGIN_FLOOR_PERCENT / 100;
+    const minAcceptablePriceForMargin = Math.ceil(product.costPrice / (1 - minAcceptableMargin));
+    const marginSafeDiscountPaise = Math.max(0, product.price - minAcceptablePriceForMargin);
+    const hardCapDiscountPaise = Math.floor(product.price * (MAX_DISCOUNT / 100));
+    const maxOfferableDiscountPaise = Math.min(marginSafeDiscountPaise, hardCapDiscountPaise);
+    const maxOfferableDiscountPercent =
+      product.price > 0 ? (maxOfferableDiscountPaise / product.price) * 100 : 0;
 
-        if (counterDiscountPercent > 0) {
-          decision = "countered";
-          finalPrice = minAcceptablePrice;
-          reasoning = `Requested discount violates minimum margin floor of ${GuardrailEngine.DEFAULT_MIN_MARGIN_FLOOR_PERCENT}%. Counter-offering with maximum allowable discount of ${counterDiscountPercent.toFixed(1)}%.`;
-        } else {
-          decision = "rejected";
-          reasoning = `Cannot offer any discount on this product while maintaining the margin floor.`;
-        }
+    if (requestedDiscountPaise > maxOfferableDiscountPaise) {
+      // Asked for more than we can give -- always counter with our best
+      // possible offer instead of a flat refusal, whether the platform hard
+      // cap or this product's margin floor is the limiting factor.
+      if (maxOfferableDiscountPaise > 0) {
+        decision = "countered";
+        finalPrice = product.price - maxOfferableDiscountPaise;
+        reasoning = `Requested discount of ${params.requestedDiscountPercent}% is more than we can offer on this product. The maximum we can do is ${maxOfferableDiscountPercent.toFixed(1)}%.`;
       } else {
-         decision = "rejected";
-         reasoning = guardrail.reason;
+        decision = "rejected";
+        reasoning = `We can't offer any discount on this product right now.`;
       }
     } else {
       decision = "accepted";
-      finalPrice = calculation.subtotal - requestedDiscountPaise; // subtotal here is just product.price
-      reasoning = `Requested discount of ${params.requestedDiscountPercent}% accepted. Margin and ceiling constraints passed.`;
+      finalPrice = product.price - requestedDiscountPaise;
+      reasoning = `Requested discount of ${params.requestedDiscountPercent}% accepted. Margin and platform limits both satisfied.`;
     }
 
     // Log to Audit Trail

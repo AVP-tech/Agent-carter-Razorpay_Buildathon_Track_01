@@ -21,19 +21,19 @@
   }
   /* Light mode body */
   body {
-    background-color: #F8FAFC;
-    color: #0F172A;
+    background-color: #FBF7F2;
+    color: #241811;
   }
   .dark body {
-    background: #090F1A;
-    color: #F1F5F9;
+    background: #170F0A;
+    color: #F5EDE3;
   }
   ::selection {
-    background: rgba(82, 143, 240, 0.2);
-    color: #072654;
+    background: rgba(194, 98, 45, 0.22);
+    color: #2A1710;
   }
   .dark ::selection {
-    background: rgba(0, 229, 255, 0.3);
+    background: rgba(242, 153, 74, 0.3);
     color: #fff;
   }
 }
@@ -43,11 +43,11 @@
   .card {
     @apply rounded-xl border transition-all duration-300;
     background: #fff;
-    border-color: #E2E8F0;
+    border-color: #E7D8C7;
     box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
   }
   .dark .card {
-    background: rgba(19, 28, 45, 0.5);
+    background: rgba(41, 28, 20, 0.55);
     border-color: rgba(255, 255, 255, 0.08);
     box-shadow: 0 4px 24px -4px rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(12px);
@@ -57,12 +57,12 @@
   }
   .card-hover:hover {
     transform: translateY(-1px);
-    border-color: #CBD5E1;
+    border-color: #D3BC9E;
     box-shadow: 0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -2px rgba(0,0,0,0.05);
   }
   .dark .card-hover:hover {
-    border-color: rgba(0, 229, 255, 0.4);
-    box-shadow: 0 0 20px rgba(0, 229, 255, 0.15), inset 0 0 10px rgba(0, 229, 255, 0.05);
+    border-color: rgba(242, 153, 74, 0.4);
+    box-shadow: 0 0 20px rgba(242, 153, 74, 0.15), inset 0 0 10px rgba(242, 153, 74, 0.05);
     transform: translateY(-2px);
   }
 
@@ -88,6 +88,8 @@
   .dark .badge-warning {
     @apply bg-amber-950 text-amber-400 border-amber-800;
   }
+  /* Kept intentionally blue -- this is the distinct semantic "info" badge,
+     separate from the brand's copper accent. Do not reskin to brand color. */
   .badge-info {
     @apply badge bg-blue-50 text-blue-700 border border-blue-200;
   }
@@ -103,9 +105,9 @@
     @apply card p-5 flex flex-col gap-1;
   }
   .dark .metric-card {
-    background: rgba(19, 28, 45, 0.6);
+    background: rgba(41, 28, 20, 0.65);
     border: 1px solid rgba(255, 255, 255, 0.05);
-    border-bottom: 2px solid rgba(0, 229, 255, 0.3);
+    border-bottom: 2px solid rgba(242, 153, 74, 0.3);
     position: relative;
     overflow: hidden;
   }
@@ -114,7 +116,7 @@
     position: absolute;
     top: 0; left: 0; right: 0;
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(0, 229, 255, 0.5), transparent);
+    background: linear-gradient(90deg, transparent, rgba(242, 153, 74, 0.5), transparent);
     opacity: 0;
     transition: opacity 0.3s;
   }
@@ -122,15 +124,15 @@
     opacity: 1;
   }
   .dark .metric-card:hover {
-    border-bottom-color: #00E5FF;
-    box-shadow: 0 10px 30px -10px rgba(0, 229, 255, 0.3);
+    border-bottom-color: #F2994A;
+    box-shadow: 0 10px 30px -10px rgba(242, 153, 74, 0.3);
   }
   .metric-value {
     @apply text-2xl font-bold tracking-tight text-slate-900;
   }
   .dark .metric-value {
-    color: #00E5FF;
-    text-shadow: 0 0 15px rgba(0, 229, 255, 0.4);
+    color: #F2994A;
+    text-shadow: 0 0 15px rgba(242, 153, 74, 0.4);
   }
   .metric-label {
     @apply text-sm font-medium text-slate-500;
@@ -142,71 +144,71 @@
   /* === BUTTONS === */
   .btn-primary {
     @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 font-semibold text-sm rounded-lg transition-all duration-200;
-    background: #528FF0;
+    background: #C2622D;
     color: #fff;
-    box-shadow: 0 4px 14px rgba(82,143,240,0.25);
+    box-shadow: 0 4px 14px rgba(194,98,45,0.28);
   }
   .btn-primary:hover {
-    background: #1A73E8;
-    box-shadow: 0 6px 20px rgba(82,143,240,0.35);
+    background: #A8501F;
+    box-shadow: 0 6px 20px rgba(194,98,45,0.38);
   }
   .dark .btn-primary {
-    background: linear-gradient(135deg, #00E5FF, #3B82F6);
-    color: #090F1A;
+    background: linear-gradient(135deg, #F2994A, #E08A3C);
+    color: #170F0A;
     font-weight: 700;
-    box-shadow: 0 4px 15px rgba(0, 229, 255, 0.3);
+    box-shadow: 0 4px 15px rgba(242, 153, 74, 0.3);
   }
   .dark .btn-primary:hover {
-    background: linear-gradient(135deg, #00E5FF, #00C6FF);
-    box-shadow: 0 6px 20px rgba(0, 229, 255, 0.5);
-    color: #090F1A;
+    background: linear-gradient(135deg, #F2994A, #D9782E);
+    box-shadow: 0 6px 20px rgba(242, 153, 74, 0.5);
+    color: #170F0A;
   }
   .btn-secondary {
     @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 font-semibold text-sm rounded-lg transition-all duration-200;
     background: #fff;
-    color: #334155;
-    border: 1px solid #E2E8F0;
+    color: #402F24;
+    border: 1px solid #E7D8C7;
     box-shadow: 0 1px 3px rgba(0,0,0,0.06);
   }
   .btn-secondary:hover {
-    background: #F8FAFC;
-    border-color: #CBD5E1;
-    color: #0F172A;
+    background: #FBF7F2;
+    border-color: #D3BC9E;
+    color: #241811;
   }
   .dark .btn-secondary {
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    color: #F1F5F9;
+    color: #F5EDE3;
     box-shadow: none;
   }
   .dark .btn-secondary:hover {
-    background: rgba(157, 78, 221, 0.15);
-    border-color: rgba(157, 78, 221, 0.5);
+    background: rgba(181, 101, 29, 0.18);
+    border-color: rgba(181, 101, 29, 0.5);
     color: #fff;
-    box-shadow: 0 0 15px rgba(157, 78, 221, 0.3);
+    box-shadow: 0 0 15px rgba(181, 101, 29, 0.3);
   }
 
   /* === CHAT BUBBLES === */
   .chat-user {
     @apply rounded-2xl rounded-br-sm px-4 py-3;
-    background: #528FF0;
+    background: #C2622D;
     color: #fff;
   }
   .dark .chat-user {
-    background: linear-gradient(135deg, #00E5FF, #3B82F6);
-    color: #090F1A;
-    box-shadow: 0 4px 15px rgba(0, 229, 255, 0.2);
+    background: linear-gradient(135deg, #F2994A, #E08A3C);
+    color: #170F0A;
+    box-shadow: 0 4px 15px rgba(242, 153, 74, 0.2);
   }
   .chat-agent {
     @apply rounded-2xl rounded-bl-sm px-4 py-3;
     background: #fff;
-    color: #1E293B;
-    border: 1px solid #E2E8F0;
+    color: #291C14;
+    border: 1px solid #E7D8C7;
     box-shadow: 0 1px 3px rgba(0,0,0,0.06);
   }
   .dark .chat-agent {
-    background: rgba(30, 41, 59, 0.5);
-    color: #E2E8F0;
+    background: rgba(64, 47, 36, 0.5);
+    color: #E7D8C7;
     border: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
     backdrop-filter: blur(10px);
@@ -228,15 +230,15 @@
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #CBD5E1;
+  background: #D3BC9E;
   border-radius: 10px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #94A3B8;
+  background: #A98A66;
 }
 .dark ::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: #5B4433;
 }
 .dark ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  background: #7C6047;
 }

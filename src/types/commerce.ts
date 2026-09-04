@@ -39,6 +39,24 @@ export interface UpsellRecommendation {
   expectedMarginPercent: number;
 }
 
+/**
+ * Structured outcome of a FailureRecoveryTool.handleFailure() call, surfaced
+ * on a CheckoutResult so callers (A2A buyers, the chat UI) can act on it
+ * programmatically instead of just seeing an error string.
+ */
+export interface CheckoutRecoveryInfo {
+  recovered: boolean;
+  strategy: "ALTERNATIVE_ITEM_FOUND" | "PAYMENT_LINK_ESCALATION" | "CAPPED_DISCOUNT_APPLIED" | "CART_DOWNSIZED";
+  message: string;
+  suggestedAlternative?: {
+    id: string;
+    sku: string;
+    title: string;
+    price: number;
+    inventoryCount: number;
+  };
+}
+
 export interface CheckoutResult {
   success: boolean;
   orderId?: string;
@@ -47,8 +65,17 @@ export interface CheckoutResult {
   currency: string;
   status: string;
   paymentLink?: string;
+  /** What was actually purchased -- needed by the post-purchase upsell flow
+   * to know which SKU to recommend against, and useful generally. */
+  items?: { sku: string; title: string; quantity: number }[];
   guardrailVerdict: "PASSED" | "BLOCKED" | "OVERRIDDEN";
   guardrailReason?: string;
+  /** Present whenever a failure was gracefully handled instead of just rejected. */
+  recovery?: CheckoutRecoveryInfo;
+  /** True when this result was served from a prior order matching the same
+   * idempotency key, instead of creating a new charge -- protects a retried
+   * A2A request (e.g. after a timeout) from double-charging the buyer. */
+  idempotentReplay?: boolean;
   explainability: {
     basePrice: number;
     discount: number;
@@ -56,5 +83,8 @@ export interface CheckoutResult {
     finalPayable: number;
     marginHealthy: boolean;
     auditTraceId: string;
+    /** True when the requested discount was automatically capped to preserve the merchant's margin floor and the order still went through. */
+    autoAdjustedDiscount?: boolean;
+    originalRequestedDiscountPaise?: number;
   };
 }

@@ -10,34 +10,34 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Razorpay-inspired professional palette
+        // "Espresso & Copper" brand palette
         rzp: {
-          navy:    "#072654",
-          blue:    "#528FF0",
-          accent:  "#1A73E8",
-          light:   "#DBEAFE",
-          ice:     "#EFF6FF",
+          navy:    "#2A1710", // deep espresso brown-black
+          blue:    "#C2622D", // primary brand copper
+          accent:  "#E08A3C", // warm amber accent
+          light:   "#F3D9BE", // light copper tint
+          ice:     "#FBF3EA", // warm ivory tint
         },
-        // Dark Enterprise SaaS colors
+        // Dark mode accent set (espresso-bar aesthetic)
         hackathon: {
-          midnight: "#090F1A", // Deep midnight black/slate
-          slate: "#131C2D",
-          cyan: "#00E5FF", // Electric cyan
-          violet: "#9D4EDD", // Subtle violet
-          blue: "#3B82F6",
+          midnight: "#170F0A", // near-black warm espresso backdrop
+          slate: "#241811",
+          cyan: "#F2994A",   // warm copper glow (kept key name for compatibility)
+          violet: "#B5651D",
+          blue: "#E08A3C",
         },
         surface: {
           0:   "#FFFFFF",
-          50:  "#F8FAFC",
-          100: "#F1F5F9",
-          200: "#E2E8F0",
-          300: "#CBD5E1",
-          400: "#94A3B8",
-          500: "#64748B",
-          600: "#475569",
-          700: "#334155",
-          800: "#1E293B",
-          900: "#090F1A", // Using midnight here too
+          50:  "#FBF7F2",
+          100: "#F5EDE3",
+          200: "#E7D8C7",
+          300: "#D3BC9E",
+          400: "#A98A66",
+          500: "#7C6047",
+          600: "#5B4433",
+          700: "#402F24",
+          800: "#291C14",
+          900: "#170F0A",
         },
         status: {
           success: "#059669",
@@ -55,7 +55,7 @@ const config: Config = {
         "card-md": "0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -2px rgba(0,0,0,0.05)",
         "card-lg": "0 10px 25px -5px rgba(0,0,0,0.08), 0 8px 10px -6px rgba(0,0,0,0.04)",
         "nav":     "0 1px 3px rgba(0,0,0,0.05)",
-        "blue":    "0 4px 14px rgba(82,143,240,0.25)",
+        "blue":    "0 4px 14px rgba(194,98,45,0.28)",
       },
     },
   },

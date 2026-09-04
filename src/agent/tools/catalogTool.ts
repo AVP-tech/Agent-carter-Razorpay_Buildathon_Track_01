@@ -82,6 +82,32 @@ export const SEED_PRODUCTS: MockProduct[] = [
     isActive: true,
   },
   {
+    id: "prod_frother_07",
+    sku: "FROTHER-MILK-ELEC",
+    title: "Electric Handheld Milk Frother Wand",
+    description: "Rechargeable stainless-steel whisk for silky microfoam on lattes and cappuccinos in under 30 seconds.",
+    category: "Coffee Accessories",
+    price: 89900, // INR 899.00
+    costPrice: 42000, // INR 420.00 (53% margin)
+    inventoryCount: 60,
+    tags: ["frother", "milk", "latte", "accessories"],
+    imageUrl: "https://images.unsplash.com/photo-1461023058943-07fcbe16d735?w=700&auto=format&fit=crop&q=80",
+    isActive: true,
+  },
+  {
+    id: "prod_coldbrew_08",
+    sku: "COLDBREW-CONC-750ML",
+    title: "Nitro Cold Brew Concentrate (750ml)",
+    description: "Slow-steeped 20-hour cold brew concentrate, double strength -- just add water, milk or ice.",
+    category: "Cold Brew",
+    price: 64900, // INR 649.00
+    costPrice: 28000, // INR 280.00 (57% margin)
+    inventoryCount: 40,
+    tags: ["cold brew", "nitro", "ready-to-drink"],
+    imageUrl: "https://images.unsplash.com/photo-1517701604599-bb29b565090c?w=700&auto=format&fit=crop&q=80",
+    isActive: true,
+  },
+  {
     id: "prod_industrial_06",
     sku: "COMMERCIAL-ROASTER-50KG",
     title: "Industrial 50KG High-Capacity Coffee Roasting Drum",
@@ -113,68 +139,32 @@ export class CatalogTool {
     products: MockProduct[];
   }> {
     const startTime = Date.now();
-    let results: MockProduct[] = [];
 
-    try {
-      if (process.env.DATABASE_URL && !process.env.DATABASE_URL.includes("localhost:5432/razoragent_db")) {
-        const dbProducts = await prisma.product.findMany({
-          where: {
-            isActive: true,
-            ...(params.category ? { category: { equals: params.category, mode: "insensitive" } } : {}),
-            ...(params.inStockOnly ? { inventoryCount: { gt: 0 } } : {}),
-            ...(params.maxPricePaise ? { price: { lte: params.maxPricePaise } } : {}),
-            ...(params.query
-              ? {
-                  OR: [
-                    { title: { contains: params.query, mode: "insensitive" } },
-                    { description: { contains: params.query, mode: "insensitive" } },
-                    { sku: { contains: params.query, mode: "insensitive" } },
-                  ],
-                }
-              : {}),
-          },
+    // The agent-readable catalog is a deterministic, code-owned data
+    // contract (SEED_PRODUCTS) -- NOT whatever happens to be sitting in the
+    // database. The DB is used purely as a persistence layer for orders and
+    // the audit trail (see ensureInDb below), so it can carry unrelated
+    // legacy/seed rows without ever leaking into what shoppers or the agent
+    // see as "the catalog".
+    const results = SEED_PRODUCTS.filter((p) => {
+      if (!p.isActive) return false;
+      if (params.inStockOnly && p.inventoryCount <= 0) return false;
+      if (params.maxPricePaise && p.price > params.maxPricePaise) return false;
+      if (params.category && p.category.toLowerCase() !== params.category.toLowerCase()) return false;
+      if (params.query) {
+        const qWords = params.query.toLowerCase().split(/\s+/).filter(w => w.length > 2);
+        if (qWords.length === 0) return true; // fallback if query is too short
+
+        return qWords.some(q => {
+          const matchesTitle = p.title.toLowerCase().includes(q);
+          const matchesDesc = p.description.toLowerCase().includes(q);
+          const matchesSku = p.sku.toLowerCase().includes(q);
+          const matchesTags = p.tags.some((t) => t.toLowerCase().includes(q));
+          return matchesTitle || matchesDesc || matchesSku || matchesTags;
         });
-        if (dbProducts.length > 0) {
-          results = dbProducts.map((p, index) => ({
-            id: p.id,
-            sku: p.sku,
-            title: p.title,
-            description: p.description,
-            category: p.category,
-            price: p.price,
-            costPrice: p.costPrice,
-            inventoryCount: p.inventoryCount,
-            tags: p.tags,
-            imageUrl: p.imageUrl || undefined,
-            isActive: p.isActive,
-          }));
-        }
       }
-    } catch {
-      // Fallback
-    }
-
-    if (results.length === 0) {
-      results = SEED_PRODUCTS.filter((p) => {
-        if (!p.isActive) return false;
-        if (params.inStockOnly && p.inventoryCount <= 0) return false;
-        if (params.maxPricePaise && p.price > params.maxPricePaise) return false;
-        if (params.category && p.category.toLowerCase() !== params.category.toLowerCase()) return false;
-        if (params.query) {
-          const qWords = params.query.toLowerCase().split(/\s+/).filter(w => w.length > 2);
-          if (qWords.length === 0) return true; // fallback if query is too short
-          
-          return qWords.some(q => {
-            const matchesTitle = p.title.toLowerCase().includes(q);
-            const matchesDesc = p.description.toLowerCase().includes(q);
-            const matchesSku = p.sku.toLowerCase().includes(q);
-            const matchesTags = p.tags.some((t) => t.toLowerCase().includes(q));
-            return matchesTitle || matchesDesc || matchesSku || matchesTags;
-          });
-        }
-        return true;
-      });
-    }
+      return true;
+    });
 
     if (params.sessionId && params.traceId) {
       await AuditLogger.log({
@@ -201,38 +191,75 @@ export class CatalogTool {
    * Get single product by SKU or ID
    */
   static async getProduct(skuOrId: string): Promise<MockProduct | null> {
-    try {
-      if (process.env.DATABASE_URL && !process.env.DATABASE_URL.includes("localhost:5432/razoragent_db")) {
-        const found = await prisma.product.findFirst({
-          where: {
-            OR: [{ id: skuOrId }, { sku: { equals: skuOrId, mode: "insensitive" } }],
-            isActive: true,
-          },
-        });
-        if (found) {
-          return {
-            id: found.id,
-            sku: found.sku,
-            title: found.title,
-            description: found.description,
-            category: found.category,
-            price: found.price,
-            costPrice: found.costPrice,
-            inventoryCount: found.inventoryCount,
-            tags: found.tags,
-            imageUrl: found.imageUrl || undefined,
-            isActive: found.isActive,
-          };
-        }
-      }
-    } catch {
-      // Fallback
-    }
-
+    // Same rationale as searchCatalog: SEED_PRODUCTS is the single source of
+    // truth for product identity/pricing/stock, regardless of what rows
+    // exist in the database.
     const normalized = skuOrId.toLowerCase();
     const local = SEED_PRODUCTS.find(
       (p) => p.sku.toLowerCase() === normalized || p.id.toLowerCase() === normalized
     );
     return local || null;
+  }
+
+  /**
+   * Best-effort self-heal: make sure this product actually has a matching
+   * row in the database before an Order/OrderItem/AuditLog write tries to
+   * foreign-key against it. Without this, a DB that was never seeded (or
+   * has drifted from the in-memory catalog) causes every checkout's order
+   * persistence to fail with a FOREIGN KEY constraint violation while the
+   * checkout itself silently "succeeds" via the in-memory fallback --
+   * quietly breaking the audit trail's DB durability.
+   */
+  /**
+   * Actually deplete stock on a successful order instead of leaving
+   * inventoryCount as a permanently static fixture. Mutates the in-memory
+   * SEED_PRODUCTS entry (the source of truth every read goes through) and
+   * best-effort mirrors the new count into the DB row for persistence --
+   * catalog reads never depend on the DB value, so a failed mirror here
+   * can't desync what shoppers or the agent see.
+   */
+  static async decrementInventory(sku: string, quantity: number): Promise<void> {
+    const product = SEED_PRODUCTS.find((p) => p.sku.toLowerCase() === sku.toLowerCase());
+    if (!product) return;
+
+    product.inventoryCount = Math.max(0, product.inventoryCount - quantity);
+
+    try {
+      if (process.env.DATABASE_URL && !process.env.DATABASE_URL.includes("localhost:5432/razoragent_db")) {
+        await prisma.product.updateMany({
+          where: { sku: product.sku },
+          data: { inventoryCount: product.inventoryCount },
+        });
+      }
+    } catch (err) {
+      console.warn("[CatalogTool] Inventory DB mirror skipped:", (err as any)?.message);
+    }
+  }
+
+  static async ensureInDb(product: MockProduct): Promise<void> {
+    try {
+      if (!process.env.DATABASE_URL || process.env.DATABASE_URL.includes("localhost:5432/razoragent_db")) {
+        return;
+      }
+      await prisma.product.upsert({
+        where: { sku: product.sku },
+        update: {},
+        create: {
+          id: product.id,
+          sku: product.sku,
+          title: product.title,
+          description: product.description,
+          category: product.category,
+          price: product.price,
+          costPrice: product.costPrice,
+          inventoryCount: product.inventoryCount,
+          tags: product.tags,
+          imageUrl: product.imageUrl,
+          isActive: product.isActive,
+        },
+      });
+    } catch (err) {
+      console.warn("[CatalogTool] ensureInDb skipped:", (err as any)?.message);
+    }
   }
 }
